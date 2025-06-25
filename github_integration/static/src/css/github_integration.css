@@ -1,0 +1,72 @@
+.github_integration_kanban {
+    margin-top: 5px;
+}
+
+.github_status {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.github_status .badge {
+    font-size: 11px;
+    padding: 2px 6px;
+}
+
+.badge-success {
+    background-color: #28a745;
+    color: white;
+}
+
+.badge-failure {
+    background-color: #dc3545;
+    color: white;
+}
+
+.badge-pending {
+    background-color: #ffc107;
+    color: black;
+}
+
+.badge-in_progress {
+    background-color: #17a2b8;
+    color: white;
+}
+
+.badge-unknown {
+    background-color: #6c757d;
+    color: white;
+}
+
+.text-success {
+    color: #28a745;
+}
+
+.text-failure {
+    color: #dc3545;
+}
+
+.text-pending {
+    color: #ffc107;
+}
+
+.text-in_progress {
+    color: #17a2b8;
+}
+
+.text-unknown {
+    color: #6c757d;
+}
+
+.github_task_integration {
+    margin-top: 3px;
+}
+
+.github_task_integration a {
+    color: #333;
+    font-size: 16px;
+}
+
+.github_task_integration a:hover {
+    color: #0366d6;
+}

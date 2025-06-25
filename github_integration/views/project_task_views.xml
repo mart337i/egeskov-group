@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_task_kanban_github" model="ir.ui.view">
+        <field name="name">project.task.kanban.github</field>
+        <field name="model">project.task</field>
+        <field name="inherit_id" ref="project.view_task_kanban"/>
+        <field name="arch" type="xml">
+            <!-- Add required fields to kanban view -->
+            <xpath expr="//field[@name='state']" position="after">
+                <field name="project_id" invisible="1"/>
+            </xpath>
+            
+            <!-- Add GitHub link to the footer -->
+            <xpath expr="//footer/div[@class='d-flex align-items-center gap-1']" position="inside">
+                <a t-if="record.project_id.github_repo_url" 
+                    t-attf-href="#{record.project_id.github_repo_url}" 
+                    target="_blank" 
+                    class="btn btn-sm btn-outline-secondary p-1"
+                    title="Open GitHub Repository">
+                     <i class="fa fa-github"/>
+                </a>
+            </xpath>
+        </field>
+    </record>
+    
+    <record id="view_task_form_github" model="ir.ui.view">
+        <field name="name">project.task.form.github</field>
+        <field name="model">project.task</field>
+        <field name="inherit_id" ref="project.view_task_form2"/>
+        <field name="arch" type="xml">
+            <xpath expr="//div[hasclass('oe_button_box')]" position="inside">
+                <button name="action_open_github_repo" 
+                        type="object" 
+                        class="oe_stat_button" 
+                        icon="fa-github"
+                        invisible="not project_id.github_repo_url">
+                    <div class="o_field_widget o_stat_info">
+                        <span class="o_stat_text">GitHub</span>
+                        <span class="o_stat_text">Repository</span>
+                    </div>
+                </button>
+            </xpath>
+        </field>
+    </record>
+</odoo>

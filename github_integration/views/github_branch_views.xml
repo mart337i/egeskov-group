@@ -1,0 +1,92 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Branch Tree View -->
+    <record id="view_github_branch_list" model="ir.ui.view">
+        <field name="name">github.branch.list</field>
+        <field name="model">github.branch</field>
+        <field name="arch" type="xml">
+            <list string="GitHub Branches">
+                <field name="name"/>
+                <field name="repository_id"/>
+                <field name="project_id"/>
+                <field name="sha"/>
+                <field name="is_default"/>
+                <button name="action_open_branch_on_github" type="object" 
+                        icon="fa-external-link" title="Open branch on GitHub"/>
+            </list>
+        </field>
+    </record>
+
+    <!-- Branch Form View -->
+    <record id="view_github_branch_form" model="ir.ui.view">
+        <field name="name">github.branch.form</field>
+        <field name="model">github.branch</field>
+        <field name="arch" type="xml">
+            <form string="GitHub Branch">
+                <sheet>
+                    <div class="oe_button_box" name="button_box">
+                        <button name="action_open_branch_on_github" type="object" class="oe_stat_button" icon="fa-github">
+                            <div class="o_field_widget o_stat_info">
+                                <span class="o_stat_text">Open on</span>
+                                <span class="o_stat_text">GitHub</span>
+                            </div>
+                        </button>
+                    </div>
+                    
+                    <div class="oe_title">
+                        <h1>
+                            <field name="name" placeholder="Branch name"/>
+                        </h1>
+                    </div>
+                    
+                    <group>
+                        <group name="basic_info" string="Basic Information">
+                            <field name="repository_id"/>
+                            <field name="project_id"/>
+                            <field name="sha"/>
+                            <field name="is_default"/>
+                        </group>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <!-- Branch Search View -->
+    <record id="view_github_branch_search" model="ir.ui.view">
+        <field name="name">github.branch.search</field>
+        <field name="model">github.branch</field>
+        <field name="arch" type="xml">
+            <search string="GitHub Branches">
+                <field name="name" string="Branch"/>
+                <field name="repository_id"/>
+                <field name="project_id"/>
+                <field name="sha"/>
+                <separator/>
+                <filter string="Default Branches" name="default" domain="[('is_default', '=', True)]"/>
+                <separator/>
+                <group expand="0" string="Group By">
+                    <filter string="Repository" name="group_repository" context="{'group_by': 'repository_id'}"/>
+                    <filter string="Project" name="group_project" context="{'group_by': 'project_id'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <!-- Branch Action -->
+    <record id="action_github_branch" model="ir.actions.act_window">
+        <field name="name">GitHub Branches</field>
+        <field name="res_model">github.branch</field>
+        <field name="view_mode">list,form</field>
+        <field name="view_id" ref="view_github_branch_form"/>
+        <field name="search_view_id" ref="view_github_branch_search"/>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                No GitHub branches found!
+            </p>
+            <p>
+                Branches are automatically fetched when you refresh repositories.
+            </p>
+        </field>
+    </record>
+</odoo>

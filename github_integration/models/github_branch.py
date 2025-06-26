@@ -93,3 +93,12 @@ class GitHubBranch(models.Model):
         
         for repository in repositories:
             self.fetch_branches_for_repository(repository.id)
+
+    def action_open_branch_on_github(self):
+        if self.repository_id and self.repository_id.html_url:
+            branch_url = f"{self.repository_id.html_url}/list/{self.name}"
+            return {
+                'type': 'ir.actions.act_url',
+                'url': branch_url,
+                'target': 'new',
+            }

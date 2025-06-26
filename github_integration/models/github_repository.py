@@ -179,3 +179,30 @@ class GitHubRepository(models.Model):
                 name += f" - {repo.description[:50]}{'...' if len(repo.description) > 50 else ''}"
             result.append((repo.id, name))
         return result
+
+    def action_open_github(self):
+        return {
+            'type': 'ir.actions.act_url',
+            'url': self.html_url,
+            'target': 'new',
+        }
+
+    def action_view_projects(self):
+        return {
+            'name': 'Projects',
+            'type': 'ir.actions.act_window',
+            'res_model': 'project.project',
+            'view_mode': 'list,form',
+            'domain': [('github_repository_id', '=', self.id)],
+            'context': {'default_github_repository_id': self.id}
+        }
+
+    def action_view_branches(self):
+        return {
+            'name': 'Branches',
+            'type': 'ir.actions.act_window',
+            'res_model': 'github.branch',
+            'view_mode': 'list,form',
+            'domain': [('repository_id', '=', self.id)],
+            'context': {'default_repository_id': self.id}
+        }

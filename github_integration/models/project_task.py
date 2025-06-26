@@ -59,7 +59,7 @@ class ProjectTask(models.Model):
     def action_open_github_branch(self):
         """Open GitHub branch in new tab"""
         if self.project_id.github_repo_url and self.github_branch_id:
-            branch_url = f"{self.project_id.github_repo_url}/tree/{self.github_branch_id.name}"
+            branch_url = f"{self.project_id.github_repo_url}/list/{self.github_branch_id.name}"
             return {
                 'type': 'ir.actions.act_url',
                 'url': branch_url,

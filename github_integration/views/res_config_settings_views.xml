@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+<record id="res_config_settings_view_form_github" model="ir.ui.view">
+        <field name="name">res.config.settings.view.form.inherit.github</field>
+        <field name="model">res.config.settings</field>
+        <field name="priority" eval="90"/>
+        <field name="inherit_id" ref="base.res_config_settings_view_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//form" position="inside">
+                <app string="GitHub" name="github_integration">
+                    <block title="GitHub Integration">
+                        <setting string="GitHub Personal Access Token" help="Configure your GitHub Personal Access Token for API authentication. This token will be used for all GitHub API requests across projects.">
+                            <field name="github_token"/>
+                            <div class="text-muted mt-2">
+                                <strong>How to create a GitHub token:</strong><br/>
+                                1. Go to GitHub Settings -> Developer settings -> Personal access tokens<br/>
+                                2. Generate new token (classic)<br/>
+                                3. Select required scopes: repo, deployments<br/>
+                                4. Copy and paste the token here
+                            </div>
+                        </setting>
+                    </block>
+                </app>
+            </xpath>
+        </field>
+    </record>
+</odoo>

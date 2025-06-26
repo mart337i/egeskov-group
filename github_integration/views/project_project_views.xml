@@ -17,14 +17,11 @@
                                invisible="not github_repo_url"/>
                         <field name="github_repo_name" string="Repository Name" 
                                invisible="not github_repo_url"/>
-                        <field name="github_token" string="GitHub Personal Access Token" 
-                               password="True" 
-                               placeholder="ghp_xxxxxxxxxxxxxxxxxxxx"
-                               invisible="not is_software_project"/>
+
                     </group>
                 </group>
                 
-                <group invisible="not github_repo_url" col="2">
+                <group invisible="not github_repo_url or last_deployment_status == 'unknown'" col="2">
                     <group string="Deployment Status">
                         <field name="last_deployment_status" string="Last Deployment Status" readonly="1"/>
                         <field name="last_deployment_date" string="Last Deployment Date" readonly="1"/>
@@ -68,7 +65,7 @@
                 <div class="github_integration_kanban me-2" t-if="record.is_software_project.raw_value">
                     <div class="d-flex align-items-center gap-2">
                         <!-- Deployment Status Badge -->
-                        <span t-if="record.last_deployment_status.raw_value != 'unknown'" 
+                        <span t-if="record.last_deployment_status.raw_value and record.last_deployment_status.raw_value != 'unknown'" 
                               class="badge badge-sm" 
                               t-attf-class="badge-#{record.last_deployment_status.raw_value}"
                               t-att-title="record.last_deployment_date.value">

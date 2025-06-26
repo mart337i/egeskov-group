@@ -28,10 +28,7 @@ class ProjectProject(models.Model):
         help='Name of the GitHub repository'
     )
     
-    github_token = fields.Char(
-        string='GitHub Token',
-        help='Personal access token for GitHub API (optional for public repos)'
-    )
+
     
     last_deployment_status = fields.Selection([
         ('success', 'Success'),
@@ -109,11 +106,14 @@ class ProjectProject(models.Model):
             return
         
         headers = {'Accept': 'application/vnd.github.v3+json'}
-        if self.github_token:
-            headers['Authorization'] = f'token {self.github_token}'
-            _logger.debug("Using GitHub token for authentication")
+        
+        # Get GitHub token from system parameters
+        github_token = self.env['ir.config_parameter'].sudo().get_param('github_integration.token')
+        if github_token:
+            headers['Authorization'] = f'token {github_token}'
+            _logger.debug("Using GitHub token from system parameters for authentication")
         else:
-            _logger.warning("No GitHub token provided - API rate limits may apply")
+            _logger.warning("No GitHub token configured in system parameters - API rate limits may apply")
     
         try:
             # Get latest deployment

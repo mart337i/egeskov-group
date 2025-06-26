@@ -16,8 +16,10 @@
     'author': 'Egeskov-group',
     'depends': ['project', 'web'],
     'data': [
+        'data/system_parameters.xml',
         'data/ir_cron.xml',
         'security/ir.model.access.csv',
+        'views/res_config_settings_views.xml',
         'views/project_project_views.xml',
         'views/project_task_views.xml',
     ],

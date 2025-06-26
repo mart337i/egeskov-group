@@ -13,18 +13,31 @@ class ProjectProject(models.Model):
         help='Check if this is a software development project'
     )
     
+    github_repository_id = fields.Many2one(
+        'github.repository',
+        string='GitHub Repository',
+        help='Select GitHub repository for this project'
+    )
+    
+    # Computed fields for backward compatibility
     github_repo_url = fields.Char(
         string='GitHub Repository URL',
+        compute='_compute_github_fields',
+        store=True,
         help='Full URL to the GitHub repository'
     )
     
     github_owner = fields.Char(
         string='Repository Owner',
+        compute='_compute_github_fields',
+        store=True,
         help='GitHub username or organization name'
     )
     
     github_repo_name = fields.Char(
         string='Repository Name',
+        compute='_compute_github_fields',
+        store=True,
         help='Name of the GitHub repository'
     )
     
@@ -85,6 +98,18 @@ class ProjectProject(models.Model):
                 self.github_owner = False
                 self.github_repo_name = False
     
+    @api.depends('github_repository_id')
+    def _compute_github_fields(self):
+        for project in self:
+            if project.github_repository_id:
+                project.github_repo_url = project.github_repository_id.html_url
+                project.github_owner = project.github_repository_id.owner
+                project.github_repo_name = project.github_repository_id.name
+            else:
+                project.github_repo_url = False
+                project.github_owner = False
+                project.github_repo_name = False
+    
     def action_refresh_github_status(self):
         """Refresh GitHub deployment status"""
         _logger.info("Starting GitHub status refresh for %d records", len(self))
@@ -95,6 +120,12 @@ class ProjectProject(models.Model):
                 record._fetch_github_data()
             else:
                 _logger.warning("Skipping record ID %s - missing owner or repo name", record.id)
+
+    def action_refresh_github_branches(self):
+        """Refresh GitHub branches"""
+        for record in self:
+            if record.is_software_project and record.github_repository_id:
+                self.env['github.branch'].fetch_branches_for_repository(record.github_repository_id.id)
 
     def _fetch_github_data(self):
         """Fetch latest deployment and commit data from GitHub API"""

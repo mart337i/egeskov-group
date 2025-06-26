@@ -12,5 +12,31 @@
                   eval="(DateTime.now() + timedelta(days=1)).strftime('%Y-%m-%d 12:00:00')"/>
            <field name="priority">1</field>
        </record>
+       
+       <record id="action_refresh_github_branches" model="ir.cron">
+           <field name="name">Refresh GitHub branches</field>
+           <field name="model_id" ref="model_github_branch"/>
+           <field name="state">code</field>
+           <field name="code">model.refresh_all_project_branches()</field>
+           <field name="user_id" ref="base.user_root"/>
+           <field name='interval_number'>6</field>
+           <field name='interval_type'>hours</field>
+           <field name="nextcall"
+                  eval="(DateTime.now() + timedelta(hours=6)).strftime('%Y-%m-%d %H:00:00')"/>
+           <field name="priority">2</field>
+       </record>
+       
+       <record id="action_refresh_github_repositories" model="ir.cron">
+           <field name="name">Refresh GitHub repositories</field>
+           <field name="model_id" ref="model_github_repository"/>
+           <field name="state">code</field>
+           <field name="code">model.refresh_all_repositories()</field>
+           <field name="user_id" ref="base.user_root"/>
+           <field name='interval_number'>1</field>
+           <field name='interval_type'>days</field>
+           <field name="nextcall"
+                  eval="(DateTime.now() + timedelta(days=1)).strftime('%Y-%m-%d 06:00:00')"/>
+           <field name="priority">3</field>
+       </record>
    </data>
 </odoo>

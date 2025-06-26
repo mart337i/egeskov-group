@@ -10,18 +10,31 @@
                 <group>
                     <group name="github_config" string="Repository Configuration">
                         <field name="is_software_project" string="Is Software Project"/>
+                        <div invisible="not is_software_project" class="d-flex align-items-center gap-2">
+                            <field name="github_repository_id" 
+                                   placeholder="Select a GitHub repository..."
+                                   class="flex-grow-1"
+                                   options="{'no_create': True, 'no_edit': True}"/>
+                            <button name="%(action_github_repository_wizard)d" 
+                                    type="action" 
+                                    class="btn btn-sm btn-secondary"
+                                    title="Fetch repositories from GitHub"
+                                    icon="fa-download"/>
+                        </div>
                         <field name="github_repo_url" string="GitHub Repository URL" 
-                               placeholder="https://github.com/owner/repository"
-                               invisible="not is_software_project"/>
+                               readonly="1"
+                               invisible="not github_repository_id"/>
                         <field name="github_owner" string="Repository Owner" 
-                               invisible="not github_repo_url"/>
+                               readonly="1"
+                               invisible="not github_repository_id"/>
                         <field name="github_repo_name" string="Repository Name" 
-                               invisible="not github_repo_url"/>
+                               readonly="1"
+                               invisible="not github_repository_id"/>
 
                     </group>
                 </group>
                 
-                <group invisible="not github_repo_url or last_deployment_status == 'unknown'" col="2">
+                <group invisible="not github_repository_id or last_deployment_status == 'unknown'" col="2">
                     <group string="Deployment Status">
                         <field name="last_deployment_status" string="Last Deployment Status" readonly="1"/>
                         <field name="last_deployment_date" string="Last Deployment Date" readonly="1"/>
@@ -32,12 +45,20 @@
                     </group>
                 </group>
                 
-                <div invisible="not github_repo_url" class="oe_button_box">
+                <div invisible="not github_repository_id" class="oe_button_box">
                     <button name="action_refresh_github_status"
                             string="Refresh GitHub Status"
                             type="object"
                             class="btn-primary"
                             help="Fetch latest deployment status and commit information from GitHub"
+                            group="base.group_no_one"
+                            />
+                    <button name="action_refresh_github_branches"
+                            string="Refresh Branches"
+                            type="object"
+                            class="btn-secondary"
+                            help="Fetch available branches from GitHub repository"
+                            invisible="not is_software_project"
                             group="base.group_no_one"
                             />
                 </div>

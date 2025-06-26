@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_github_repository_wizard_form" model="ir.ui.view">
+        <field name="name">github.repository.wizard.form</field>
+        <field name="model">github.repository.wizard</field>
+        <field name="arch" type="xml">
+            <form string="Fetch GitHub Repositories">
+                <group>
+                    <field name="fetch_type" widget="radio"/>
+                    <field name="username" invisible="fetch_type == 'authenticated'"/>
+                </group>
+                <div class="text-muted mt-3">
+                    <p><strong>Fetch Types:</strong></p>
+                    <ul>
+                        <li><strong>User Repositories:</strong> Fetch public repositories for a specific user</li>
+                        <li><strong>Organization Repositories:</strong> Fetch repositories for an organization</li>
+                        <li><strong>All Accessible:</strong> Fetch all repositories accessible with your GitHub token (including private ones)</li>
+                    </ul>
+                </div>
+                <footer>
+                    <button name="action_fetch_repositories" string="Fetch Repositories" type="object" class="btn-primary"/>
+                    <button string="Cancel" class="btn-secondary" special="cancel"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+</odoo>

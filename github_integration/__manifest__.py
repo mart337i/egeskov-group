@@ -18,6 +18,8 @@
     'data': [
         'data/system_parameters.xml',
         'data/ir_cron.xml',
+        'wizard/github_repository_wizard_views.xml',
+        'data/wizard_actions.xml',
         'security/ir.model.access.csv',
         'views/res_config_settings_views.xml',
         'views/project_project_views.xml',

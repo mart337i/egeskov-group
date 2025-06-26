@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="action_github_repository_wizard" model="ir.actions.act_window">
+        <field name="name">Fetch GitHub Repositories</field>
+        <field name="res_model">github.repository.wizard</field>
+        <field name="view_mode">form</field>
+        <field name="target">new</field>
+        <field name="view_id" ref="view_github_repository_wizard_form"/>
+    </record>
+</odoo>

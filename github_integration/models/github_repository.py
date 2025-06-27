@@ -31,6 +31,7 @@ class GitHubRepository(models.Model):
     size = fields.Integer(string='Size (KB)', default=0)
     
     # Relations
+    organization_id = fields.Many2one('github.organization', string='Organization/User', ondelete='cascade')
     branch_ids = fields.One2many('github.branch', 'repository_id', string='Branches')
     project_ids = fields.One2many('project.project', 'github_repository_id', string='Projects')
     
@@ -39,35 +40,65 @@ class GitHubRepository(models.Model):
     ]
 
     @api.model
-    def fetch_user_repositories(self, username):
+    def fetch_user_repositories(self, username, github_token=None):
         """Fetch all repositories for a specific user"""
-        return self._fetch_repositories(f'https://api.github.com/users/{username}/repos')
+        if github_token:
+            # Use authenticated endpoint to get private repos if token belongs to this user
+            try:
+                # First check if the token belongs to this user
+                headers = {'Accept': 'application/vnd.github.v3+json', 'Authorization': f'token {github_token}'}
+                user_response = requests.get('https://api.github.com/user', headers=headers, timeout=10)
+                if user_response.status_code == 200 and user_response.json().get('login') == username:
+                    # Token belongs to this user, use authenticated endpoint
+                    return self._fetch_repositories('https://api.github.com/user/repos', github_token, {'type': 'all'})
+            except Exception as e:
+                _logger.warning("Failed to check token ownership: %s", str(e))
+        
+        # Fallback to public endpoint
+        return self._fetch_repositories(f'https://api.github.com/users/{username}/repos', github_token, {'type': 'all'})
 
     @api.model
-    def fetch_org_repositories(self, org_name):
+    def fetch_org_repositories(self, org_name, github_token=None):
         """Fetch all repositories for a specific organization"""
-        return self._fetch_repositories(f'https://api.github.com/orgs/{org_name}/repos')
+        if github_token:
+            # Use authenticated endpoint to get private repos if user has access
+            return self._fetch_repositories(f'https://api.github.com/orgs/{org_name}/repos', github_token, {'type': 'all'})
+        else:
+            # Public repos only without token
+            return self._fetch_repositories(f'https://api.github.com/orgs/{org_name}/repos', github_token, {'type': 'public'})
 
     @api.model
-    def fetch_authenticated_user_repositories(self):
+    def fetch_authenticated_user_repositories(self, github_token=None):
         """Fetch all repositories for the authenticated user (including private ones)"""
-        return self._fetch_repositories('https://api.github.com/user/repos')
+        return self._fetch_repositories('https://api.github.com/user/repos', github_token, {'type': 'all', 'visibility': 'all'})
 
     @api.model
-    def _fetch_repositories(self, api_url):
+    def _fetch_repositories(self, api_url, github_token=None, extra_params=None):
         """Generic method to fetch repositories from GitHub API"""
-        github_token = self.env['ir.config_parameter'].sudo().get_param('github_integration.token')
+        # Use provided token, fallback to system token
+        if not github_token:
+            github_token = self.env['ir.config_parameter'].sudo().get_param('github_integration.token')
         headers = {'Accept': 'application/vnd.github.v3+json'}
         if github_token:
             headers['Authorization'] = f'token {github_token}'
         
+        # Default parameters
+        base_params = {'sort': 'updated', 'per_page': 100}
+        if extra_params:
+            base_params.update(extra_params)
+        
         repositories = []
         page = 1
-        per_page = 100
         
         try:
             while True:
-                url = f"{api_url}?page={page}&per_page={per_page}&sort=updated"
+                # Build URL with parameters
+                params = base_params.copy()
+                params['page'] = page
+                
+                # Convert params to query string
+                param_str = '&'.join([f"{k}={v}" for k, v in params.items()])
+                url = f"{api_url}?{param_str}"
                 _logger.info("Fetching repositories from: %s", url)
                 
                 response = requests.get(url, headers=headers, timeout=30)
@@ -78,7 +109,11 @@ class GitHubRepository(models.Model):
                     if not repos_data:  # No more repositories
                         break
                         
-                    _logger.info("Found %d repositories on page %d", len(repos_data), page)
+                    # Count private vs public repos
+                    private_count = sum(1 for repo in repos_data if repo.get('private', False))
+                    public_count = len(repos_data) - private_count
+                    _logger.info("Found %d repositories on page %d (%d private, %d public)", 
+                               len(repos_data), page, private_count, public_count)
                     
                     for repo_data in repos_data:
                         repo_vals = self._prepare_repository_values(repo_data)
@@ -87,7 +122,7 @@ class GitHubRepository(models.Model):
                     page += 1
                     
                     # GitHub API returns less than per_page when it's the last page
-                    if len(repos_data) < per_page:
+                    if len(repos_data) < base_params['per_page']:
                         break
                         
                 elif response.status_code == 404:
@@ -146,6 +181,20 @@ class GitHubRepository(models.Model):
     def _create_or_update_repositories(self, repositories_data):
         """Create or update repository records"""
         for repo_data in repositories_data:
+            # Create or update organization first
+            owner_login = repo_data['owner']
+            organization = self.env['github.organization'].search([('login', '=', owner_login)], limit=1)
+            if not organization:
+                # Create basic organization record
+                organization = self.env['github.organization'].create({
+                    'login': owner_login,
+                    'type': 'User',  # Default, will be updated when synced
+                    'is_active': True,
+                })
+            
+            # Add organization reference to repository data
+            repo_data['organization_id'] = organization.id
+            
             existing_repo = self.search([('full_name', '=', repo_data['full_name'])], limit=1)
             if existing_repo:
                 existing_repo.write(repo_data)
@@ -163,12 +212,13 @@ class GitHubRepository(models.Model):
         # Get unique owners from existing repositories
         owners = self.search([]).mapped('owner')
         unique_owners = list(set(owners))
+        github_token = self.env['ir.config_parameter'].sudo().get_param('github_integration.token')
         
         for owner in unique_owners:
             # Try to fetch as user first, then as org
-            repos = self.fetch_user_repositories(owner)
+            repos = self.fetch_user_repositories(owner, github_token)
             if not repos:
-                self.fetch_org_repositories(owner)
+                self.fetch_org_repositories(owner, github_token)
 
     def name_get(self):
         """Custom name display for repository selection"""

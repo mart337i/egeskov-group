@@ -22,7 +22,7 @@ class GitHubBranch(models.Model):
     ]
 
     @api.model
-    def fetch_branches_for_repository(self, repository_id):
+    def fetch_branches_for_repository(self, repository_id, github_token=None):
         """Fetch branches from GitHub API for a specific repository"""
         repository = self.env['github.repository'].browse(repository_id)
         
@@ -30,8 +30,13 @@ class GitHubBranch(models.Model):
             _logger.warning("Missing GitHub owner or repo name for repository %s", repository.full_name)
             return []
             
-        # Get GitHub token from system parameters
-        github_token = self.env['ir.config_parameter'].sudo().get_param('github_integration.token')
+        # Use provided token, or organization token, or system token as fallback
+        if not github_token:
+            if repository.organization_id and repository.organization_id.github_token:
+                github_token = repository.organization_id.github_token
+            else:
+                github_token = self.env['ir.config_parameter'].sudo().get_param('github_integration.token')
+        
         headers = {'Accept': 'application/vnd.github.v3+json'}
         if github_token:
             headers['Authorization'] = f'token {github_token}'

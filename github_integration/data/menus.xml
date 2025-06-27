@@ -6,6 +6,13 @@
               sequence="100"
               web_icon="github_integration,static/description/icon.png"/>
 
+    <!-- Organization Menu -->
+    <menuitem id="menu_github_organizations"
+              name="Organizations/Users"
+              parent="menu_github_integration_root"
+              action="action_github_organization"
+              sequence="5"/>
+
     <!-- Repository Menu -->
     <menuitem id="menu_github_repositories"
               name="Repositories"

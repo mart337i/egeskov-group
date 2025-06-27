@@ -38,5 +38,18 @@
                   eval="(DateTime.now() + timedelta(days=1)).strftime('%Y-%m-%d 06:00:00')"/>
            <field name="priority">3</field>
        </record>
+       
+       <record id="action_sync_github_organizations" model="ir.cron">
+           <field name="name">Sync GitHub organizations</field>
+           <field name="model_id" ref="model_github_organization"/>
+           <field name="state">code</field>
+           <field name="code">model.sync_all_active_organizations()</field>
+           <field name="user_id" ref="base.user_root"/>
+           <field name='interval_number'>12</field>
+           <field name='interval_type'>hours</field>
+           <field name="nextcall"
+                  eval="(DateTime.now() + timedelta(hours=12)).strftime('%Y-%m-%d %H:00:00')"/>
+           <field name="priority">4</field>
+       </record>
    </data>
 </odoo>

@@ -1,5 +1,7 @@
 id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
 access_project_project_github,project.project.github,project.model_project_project,project.group_project_user,1,1,1,1
+access_github_organization_user,github.organization.user,model_github_organization,project.group_project_user,1,0,0,0
+access_github_organization_manager,github.organization.manager,model_github_organization,project.group_project_manager,1,1,1,1
 access_github_repository_user,github.repository.user,model_github_repository,project.group_project_user,1,0,0,0
 access_github_repository_manager,github.repository.manager,model_github_repository,project.group_project_manager,1,1,1,1
 access_github_branch_user,github.branch.user,model_github_branch,project.group_project_user,1,0,0,0

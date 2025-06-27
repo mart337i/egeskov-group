@@ -1,0 +1,310 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Organization Kanban View -->
+    <record id="view_github_organization_kanban" model="ir.ui.view">
+        <field name="name">github.organization.kanban</field>
+        <field name="model">github.organization</field>
+        <field name="arch" type="xml">
+            <kanban default_group_by="type" class="o_kanban_small_column">
+                <field name="id"/>
+                <field name="login"/>
+                <field name="name"/>
+                <field name="type"/>
+                <field name="avatar_url"/>
+                <field name="html_url"/>
+                <field name="description"/>
+                <field name="location"/>
+                <field name="public_repos"/>
+                <field name="followers"/>
+                <field name="repository_count"/>
+                <field name="is_active"/>
+                <field name="sync_status"/>
+                <field name="last_sync_date"/>
+                <templates>
+                    <t t-name="kanban-box">
+                        <div class="oe_kanban_card oe_kanban_global_click">
+                            <div class="o_kanban_card_header">
+                                <div class="o_kanban_card_header_title">
+                                    <div class="d-flex align-items-center">
+                                        <img t-if="record.avatar_url.value" 
+                                             t-attf-src="#{record.avatar_url.value}" 
+                                             class="o_image_40_cover rounded-circle me-2" 
+                                             alt="Avatar"/>
+                                        <div>
+                                            <div class="o_primary">
+                                                <strong><t t-esc="record.login.value"/></strong>
+                                                <span t-if="record.type.value == 'Organization'" 
+                                                      class="badge badge-info ms-1">
+                                                    <i class="fa fa-users"/> Org
+                                                </span>
+                                                <span t-if="record.type.value == 'User'" 
+                                                      class="badge badge-secondary ms-1">
+                                                    <i class="fa fa-user"/> User
+                                                </span>
+                                            </div>
+                                            <div class="o_secondary" t-if="record.name.value">
+                                                <t t-esc="record.name.value"/>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="o_kanban_card_manage_pane">
+                                    <a class="o_kanban_manage_button_section" role="menuitem">
+                                        <i class="fa fa-ellipsis-v" role="img" aria-label="Manage" title="Manage"/>
+                                    </a>
+                                </div>
+                            </div>
+                            
+                            <div class="o_kanban_card_content">
+                                <div t-if="record.description.value" class="text-muted mb-2">
+                                    <t t-esc="record.description.value"/>
+                                </div>
+                                
+                                <div class="d-flex justify-content-between align-items-center mb-2">
+                                    <div class="d-flex gap-3">
+                                        <span class="text-muted">
+                                            <i class="fa fa-folder"/> <t t-esc="record.repository_count.value"/> repos
+                                        </span>
+                                        <span t-if="record.public_repos.value" class="text-muted">
+                                            <i class="fa fa-eye"/> <t t-esc="record.public_repos.value"/> public
+                                        </span>
+                                        <span t-if="record.followers.value" class="text-muted">
+                                            <i class="fa fa-users"/> <t t-esc="record.followers.value"/> followers
+                                        </span>
+                                    </div>
+                                </div>
+                                
+                                <!-- Sync Status -->
+                                <div class="d-flex align-items-center gap-2">
+                                    <span t-if="record.sync_status.value == 'success'" 
+                                          class="badge badge-success">
+                                        <i class="fa fa-check"/> Synced
+                                    </span>
+                                    <span t-if="record.sync_status.value == 'error'" 
+                                          class="badge badge-danger">
+                                        <i class="fa fa-exclamation-triangle"/> Error
+                                    </span>
+                                    <span t-if="record.sync_status.value == 'in_progress'" 
+                                          class="badge badge-warning">
+                                        <i class="fa fa-spinner fa-spin"/> Syncing
+                                    </span>
+                                    <span t-if="record.sync_status.value == 'never'" 
+                                          class="badge badge-secondary">
+                                        <i class="fa fa-clock-o"/> Never synced
+                                    </span>
+                                    <span t-if="record.last_sync_date.value" class="text-muted small">
+                                        Last: <t t-esc="record.last_sync_date.value"/>
+                                    </span>
+                                </div>
+                            </div>
+                            
+                            <div class="o_kanban_card_footer">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <div class="d-flex gap-1">
+                                        <button name="action_sync_repositories" type="object" 
+                                                class="btn btn-sm btn-primary" title="Sync Repositories">
+                                            <i class="fa fa-refresh"/> Sync
+                                        </button>
+                                        <button name="action_view_repositories" type="object" 
+                                                class="btn btn-sm btn-outline-secondary" title="View Repositories">
+                                            <i class="fa fa-folder"/> Repos
+                                        </button>
+                                        <a t-if="record.html_url.value" t-attf-href="#{record.html_url.value}" 
+                                           target="_blank" class="btn btn-sm btn-outline-primary" title="Open on GitHub">
+                                            <i class="fa fa-github"/>
+                                        </a>
+                                    </div>
+                                    <div class="form-check form-switch">
+                                        <field name="is_active" widget="boolean_toggle" nolabel="1"/>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </t>
+                </templates>
+            </kanban>
+        </field>
+    </record>
+
+    <!-- Organization Form View -->
+    <record id="view_github_organization_form" model="ir.ui.view">
+        <field name="name">github.organization.form</field>
+        <field name="model">github.organization</field>
+        <field name="arch" type="xml">
+            <form string="GitHub Organization/User">
+                <header>
+                    <button name="action_sync_repositories" string="Sync Repositories" type="object" class="btn-primary"/>
+                    <button name="action_test_token" string="Test Token" type="object" class="btn-secondary"/>
+                    <field name="sync_status" widget="statusbar" statusbar_visible="never,success,error"/>
+                </header>
+                <sheet>
+                    <div class="oe_button_box" name="button_box">
+                        <button name="action_open_github" type="object" class="oe_stat_button" icon="fa-github">
+                            <div class="o_field_widget o_stat_info">
+                                <span class="o_stat_text">Open on</span>
+                                <span class="o_stat_text">GitHub</span>
+                            </div>
+                        </button>
+                        <button name="action_view_repositories" type="object" class="oe_stat_button" icon="fa-folder">
+                            <div class="o_field_widget o_stat_info">
+                                <span class="o_stat_value"><field name="repository_count" nolabel="1"/></span>
+                                <span class="o_stat_text">Repositories</span>
+                            </div>
+                        </button>
+                    </div>
+                    
+                    <div class="oe_title">
+                        <div class="d-flex align-items-center mb-3">
+                            <field name="avatar_url" widget="image" class="o_image_64_cover rounded-circle me-3"/>
+                            <div>
+                                <h1>
+                                    <field name="login" placeholder="username or organization"/>
+                                </h1>
+                                <h3>
+                                    <field name="name" placeholder="Display name" />
+                                </h3>
+                            </div>
+                        </div>
+                        <div class="d-flex gap-2">
+                            <field name="type" widget="badge"/>
+                            <field name="is_active" widget="boolean_toggle"/>
+                        </div>
+                    </div>
+                    
+                    <group>
+                        <group name="basic_info" string="Basic Information">
+                            <field name="github_id"/>
+                            <field name="description"/>
+                            <field name="location"/>
+                            <field name="email"/>
+                            <field name="company"/>
+                            <field name="blog" widget="url"/>
+                        </group>
+                        <group name="sync_settings" string="Sync Settings">
+                            <field name="github_token" password="True"/>
+                            <field name="auto_sync"/>
+                            <field name="last_sync_date"/>
+                            <field name="sync_error_message" invisible="sync_status != 'error'"/>
+                        </group>
+                    </group>
+                    
+                    <group>
+                        <group name="stats" string="Statistics">
+                            <field name="public_repos"/>
+                            <field name="public_gists"/>
+                            <field name="followers"/>
+                            <field name="following"/>
+                        </group>
+                        <group name="private_stats" string="Private Statistics" invisible="type != 'Organization'">
+                            <field name="total_private_repos"/>
+                            <field name="owned_private_repos"/>
+                            <field name="private_gists"/>
+                            <field name="disk_usage"/>
+                            <field name="collaborators"/>
+                        </group>
+                    </group>
+                    
+                    <group>
+                        <group name="dates" string="Dates">
+                            <field name="created_at"/>
+                            <field name="updated_at"/>
+                        </group>
+                        <group name="urls" string="URLs">
+                            <field name="html_url" widget="url"/>
+                            <field name="avatar_url" widget="url"/>
+                        </group>
+                    </group>
+                    
+                    <notebook>
+                        <page string="Repositories" name="repositories">
+                            <field name="repository_ids" nolabel="1">
+                                <list>
+                                    <field name="name"/>
+                                    <field name="description"/>
+                                    <field name="language"/>
+                                    <field name="stars_count"/>
+                                    <field name="forks_count"/>
+                                    <field name="is_private"/>
+                                    <field name="updated_at"/>
+                                    <button name="action_open_github" type="object" 
+                                            icon="fa-external-link" title="Open on GitHub"/>
+                                </list>
+                            </field>
+                        </page>
+                    </notebook>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <!-- Organization list View -->
+    <record id="view_github_organization_list" model="ir.ui.view">
+        <field name="name">github.organization.list</field>
+        <field name="model">github.organization</field>
+        <field name="arch" type="xml">
+            <list string="GitHub Organizations/Users">
+                <field name="login"/>
+                <field name="name"/>
+                <field name="type"/>
+                <field name="repository_count"/>
+                <field name="public_repos"/>
+                <field name="followers"/>
+                <field name="is_active"/>
+                <field name="sync_status"/>
+                <field name="last_sync_date"/>
+                <button name="action_sync_repositories" type="object" 
+                        icon="fa-refresh" title="Sync Repositories"/>
+                <button name="action_open_github" type="object" 
+                        icon="fa-external-link" title="Open on GitHub"/>
+            </list>
+        </field>
+    </record>
+
+    <!-- Organization Search View -->
+    <record id="view_github_organization_search" model="ir.ui.view">
+        <field name="name">github.organization.search</field>
+        <field name="model">github.organization</field>
+        <field name="arch" type="xml">
+            <search string="GitHub Organizations/Users">
+                <field name="login" string="Username/Organization"/>
+                <field name="name"/>
+                <field name="description"/>
+                <field name="location"/>
+                <separator/>
+                <filter string="Active" name="active" domain="[('is_active', '=', True)]"/>
+                <filter string="Inactive" name="inactive" domain="[('is_active', '=', False)]"/>
+                <separator/>
+                <filter string="Organizations" name="organizations" domain="[('type', '=', 'Organization')]"/>
+                <filter string="Users" name="users" domain="[('type', '=', 'User')]"/>
+                <separator/>
+                <filter string="Auto Sync" name="auto_sync" domain="[('auto_sync', '=', True)]"/>
+                <filter string="Sync Errors" name="sync_errors" domain="[('sync_status', '=', 'error')]"/>
+                <filter string="Never Synced" name="never_synced" domain="[('sync_status', '=', 'never')]"/>
+                <separator/>
+                <group expand="0" string="Group By">
+                    <filter string="Type" name="group_type" context="{'group_by': 'type'}"/>
+                    <filter string="Sync Status" name="group_sync_status" context="{'group_by': 'sync_status'}"/>
+                    <filter string="Active" name="group_active" context="{'group_by': 'is_active'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <!-- Organization Action -->
+    <record id="action_github_organization" model="ir.actions.act_window">
+        <field name="name">GitHub Organizations/Users</field>
+        <field name="res_model">github.organization</field>
+        <field name="view_mode">kanban,list,form</field>
+        <field name="view_id" ref="view_github_organization_kanban"/>
+        <field name="search_view_id" ref="view_github_organization_search"/>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                No GitHub organizations or users found!
+            </p>
+            <p>
+                Organizations and users are automatically created when you fetch repositories.
+                You can also manually create them to manage sync settings.
+            </p>
+        </field>
+    </record>
+</odoo>

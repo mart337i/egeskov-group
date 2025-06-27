@@ -21,6 +21,7 @@
         'security/ir.model.access.csv',
         'views/res_config_settings_views.xml',
         'wizard/github_repository_wizard_views.xml',
+        'views/github_organization_views.xml',
         'views/github_repository_views.xml',
         'views/github_branch_views.xml',
         'views/project_project_views.xml',

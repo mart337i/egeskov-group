@@ -26,12 +26,15 @@ class GitHubRepositoryWizard(models.TransientModel):
         github_repo_model = self.env['github.repository']
         
         try:
+            # Use system token as fallback for wizard
+            github_token = self.env['ir.config_parameter'].sudo().get_param('github_integration.token')
+            
             if self.fetch_type == 'user':
-                repositories = github_repo_model.fetch_user_repositories(self.username)
+                repositories = github_repo_model.fetch_user_repositories(self.username, github_token)
             elif self.fetch_type == 'org':
-                repositories = github_repo_model.fetch_org_repositories(self.username)
+                repositories = github_repo_model.fetch_org_repositories(self.username, github_token)
             elif self.fetch_type == 'authenticated':
-                repositories = github_repo_model.fetch_authenticated_user_repositories()
+                repositories = github_repo_model.fetch_authenticated_user_repositories(github_token)
             
             if repositories:
                 message = _('Successfully fetched %d repositories.') % len(repositories)

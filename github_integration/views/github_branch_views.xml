@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
-    <!-- Branch Tree View -->
+    <!-- Branch list View -->
     <record id="view_github_branch_list" model="ir.ui.view">
         <field name="name">github.branch.list</field>
         <field name="model">github.branch</field>

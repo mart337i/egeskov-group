@@ -20,18 +20,4 @@
               action="action_github_repository"
               sequence="10"/>
 
-    <!-- Branch Menu -->
-    <menuitem id="menu_github_branches"
-              name="Branches"
-              parent="menu_github_integration_root"
-              action="action_github_branch"
-              sequence="20"/>
-
-    <!-- Fetch Repositories Menu -->
-    <menuitem id="menu_fetch_repositories"
-              name="Fetch Repositories"
-              parent="menu_github_integration_root"
-              action="action_github_repository_wizard"
-              sequence="30"/>
-
 </odoo>

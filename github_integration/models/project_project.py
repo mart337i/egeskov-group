@@ -109,6 +109,13 @@ class ProjectProject(models.Model):
                 project.github_repo_url = False
                 project.github_owner = False
                 project.github_repo_name = False
+
+    @api.onchange('is_software_project')
+    def _onchange_on_is_software_project(self):
+        self.ensure_one()
+        if self.is_software_project == False:
+            self.github_repo_url = False
+            self.github_repository_id = False
     
     def action_refresh_github_status(self):
         """Refresh GitHub deployment status"""

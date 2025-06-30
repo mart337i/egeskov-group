@@ -78,9 +78,13 @@ class GitHubRepository(models.Model):
         # Use provided token, fallback to system token
         if not github_token:
             github_token = self.env['ir.config_parameter'].sudo().get_param('github_integration.token')
+        
         headers = {'Accept': 'application/vnd.github.v3+json'}
         if github_token:
             headers['Authorization'] = f'token {github_token}'
+            _logger.info("Using authenticated API request")
+        else:
+            _logger.info("Using unauthenticated API request (public repos only)")
         
         # Default parameters
         base_params = {'sort': 'updated', 'per_page': 100}
@@ -128,9 +132,18 @@ class GitHubRepository(models.Model):
                 elif response.status_code == 404:
                     _logger.warning("User/Organization not found: %s", api_url)
                     break
+                elif response.status_code == 403:
+                    if 'rate limit' in response.text.lower():
+                        _logger.error("GitHub API rate limit exceeded. Try again later or use a token.")
+                    else:
+                        _logger.error("Access forbidden - HTTP 403: %s", response.text[:200])
+                    break
+                elif response.status_code == 401:
+                    _logger.error("Authentication failed - invalid token: %s", response.text[:200])
+                    break
                 else:
                     _logger.error("Failed to fetch repositories - HTTP %d: %s", 
-                                response.status_code, response.text)
+                                response.status_code, response.text[:200])
                     break
                     
         except requests.exceptions.RequestException as e:
@@ -231,6 +244,7 @@ class GitHubRepository(models.Model):
         return result
 
     def action_open_github(self):
+        """Open repository on GitHub"""
         return {
             'type': 'ir.actions.act_url',
             'url': self.html_url,

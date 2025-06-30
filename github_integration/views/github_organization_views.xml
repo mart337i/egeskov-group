@@ -109,10 +109,10 @@
                                                 class="btn btn-sm btn-outline-secondary" title="View Repositories">
                                             <i class="fa fa-folder"/> Repos
                                         </button>
-                                        <a t-if="record.html_url.value" t-attf-href="#{record.html_url.value}" 
-                                           target="_blank" class="btn btn-sm btn-outline-primary" title="Open on GitHub">
+                                        <button name="action_open_github" type="object" 
+                                                class="btn btn-sm btn-outline-primary" title="Open on GitHub">
                                             <i class="fa fa-github"/>
-                                        </a>
+                                        </button>
                                     </div>
                                     <div class="form-check form-switch">
                                         <field name="is_active" widget="boolean_toggle" nolabel="1"/>

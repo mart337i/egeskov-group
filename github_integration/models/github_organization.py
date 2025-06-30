@@ -152,19 +152,27 @@ class GitHubOrganization(models.Model):
             org.sync_error_message = False
             
             try:
-                # Validate token first
+                # Get token (can be None for public repos only)
                 github_token = org.github_token or self.env['ir.config_parameter'].sudo().get_param('github_integration.token')
-                token_info = org._validate_github_token(github_token)
                 
-                if not token_info['valid']:
-                    raise Exception(f"Token validation failed: {token_info['message']}")
+                # Validate token if provided, but continue without it if not available
+                token_valid = False
+                if github_token:
+                    token_info = org._validate_github_token(github_token)
+                    token_valid = token_info['valid']
+                    if token_valid:
+                        _logger.info("Using valid token for user '%s' with scopes: %s", 
+                                   token_info.get('user'), ', '.join(token_info.get('scopes', [])))
+                    else:
+                        _logger.warning("Token invalid (%s), will sync public repositories only", token_info['message'])
+                        github_token = None
+                else:
+                    _logger.info("No token provided, will sync public repositories only")
                 
-                _logger.info("Using token for user '%s' with scopes: %s", token_info.get('user'), ', '.join(token_info.get('scopes', [])))
-                # Fetch organization/user details first
+                # Fetch organization/user details first (works with or without token)
                 org._fetch_organization_details()
                 
-                # Fetch repositories using organization's token
-                github_token = org.github_token or self.env['ir.config_parameter'].sudo().get_param('github_integration.token')
+                # Fetch repositories - will get public repos if no valid token
                 if org.type == 'Organization':
                     repositories = self.env['github.repository'].fetch_org_repositories(org.login, github_token)
                 else:
@@ -179,12 +187,18 @@ class GitHubOrganization(models.Model):
                 org.last_sync_date = fields.Datetime.now()
                 org.sync_status = 'success'
                 
+                # Prepare success message
+                if token_valid:
+                    message = _('Successfully synced %d repositories for %s (including private repos)') % (len(repositories), org.login)
+                else:
+                    message = _('Successfully synced %d public repositories for %s (no valid token for private repos)') % (len(repositories), org.login)
+                
                 return {
                     'type': 'ir.actions.client',
                     'tag': 'display_notification',
                     'params': {
                         'title': _('Success'),
-                        'message': _('Successfully synced %d repositories for %s') % (len(repositories), org.login),
+                        'message': message,
                         'type': 'success',
                         'sticky': False,
                     }

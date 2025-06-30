@@ -132,27 +132,37 @@
         <field name="model">github.organization</field>
         <field name="arch" type="xml">
             <form string="GitHub Organization/User">
+                <!-- Action Header -->
                 <header>
-                    <button name="action_sync_repositories" string="Sync Repositories" type="object" class="btn-primary"/>
-                    <button name="action_test_token" string="Test Token" type="object" class="btn-secondary"/>
+                    <button name="action_sync_repositories" string="Sync Repositories" type="object" 
+                            class="btn-primary" title="Fetch and sync all repositories from GitHub"/>
+                    <button name="action_test_token" string="Test Token" type="object" 
+                            class="btn-secondary" title="Verify GitHub token authentication"/>
                     <field name="sync_status" widget="statusbar" statusbar_visible="never,success,error"/>
                 </header>
+                
                 <sheet>
+                    <!-- Smart Buttons -->
                     <div class="oe_button_box" name="button_box">
-                        <button name="action_open_github" type="object" class="oe_stat_button" icon="fa-github">
+                        <button name="action_open_github" type="object" class="oe_stat_button" 
+                                icon="fa-github" title="Open profile on GitHub">
                             <div class="o_field_widget o_stat_info">
                                 <span class="o_stat_text">Open on</span>
                                 <span class="o_stat_text">GitHub</span>
                             </div>
                         </button>
-                        <button name="action_view_repositories" type="object" class="oe_stat_button" icon="fa-folder">
+                        <button name="action_view_repositories" type="object" class="oe_stat_button" 
+                                icon="fa-folder" title="View all repositories">
                             <div class="o_field_widget o_stat_info">
-                                <span class="o_stat_value"><field name="repository_count" nolabel="1"/></span>
+                                <span class="o_stat_value">
+                                    <field name="repository_count" nolabel="1"/>
+                                </span>
                                 <span class="o_stat_text">Repositories</span>
                             </div>
                         </button>
                     </div>
                     
+                    <!-- Profile Header -->
                     <div class="oe_title">
                         <div class="d-flex align-items-center mb-3">
                             <field name="avatar_url" widget="image" class="o_image_64_cover rounded-circle me-3"/>
@@ -165,69 +175,88 @@
                                 </h3>
                             </div>
                         </div>
-                        <div class="d-flex gap-2">
+                        <div class="d-flex gap-2 align-items-center">
                             <field name="type" widget="badge"/>
-                            <field name="is_active" widget="boolean_toggle"/>
+                            <div class="d-flex align-items-center gap-2">
+                                <label for="is_active" class="form-label mb-0">Active:</label>
+                                <field name="is_active" widget="boolean_toggle"/>
+                            </div>
                         </div>
                     </div>
                     
-                    <group>
-                        <group name="basic_info" string="Basic Information">
-                            <field name="github_id"/>
-                            <field name="description"/>
-                            <field name="location"/>
-                            <field name="email"/>
-                            <field name="company"/>
-                            <field name="blog" widget="url"/>
+                    <!-- Profile Information -->
+                    <group name="profile_info">
+                        <!-- Basic Profile Details -->
+                        <group name="basic_info" string="Profile Information">
+                            <field name="github_id" string="GitHub ID"/>
+                            <field name="description" string="Bio/Description"/>
+                            <field name="location" string="Location"/>
+                            <field name="email" string="Public Email"/>
+                            <field name="company" string="Company"/>
+                            <field name="blog" widget="url" string="Website/Blog"/>
                         </group>
-                        <group name="sync_settings" string="Sync Settings">
-                            <field name="github_token" password="True"/>
-                            <field name="auto_sync"/>
-                            <field name="last_sync_date"/>
-                            <field name="sync_error_message" invisible="sync_status != 'error'"/>
-                        </group>
-                    </group>
-                    
-                    <group>
-                        <group name="stats" string="Statistics">
-                            <field name="public_repos"/>
-                            <field name="public_gists"/>
-                            <field name="followers"/>
-                            <field name="following"/>
-                        </group>
-                        <group name="private_stats" string="Private Statistics" invisible="type != 'Organization'">
-                            <field name="total_private_repos"/>
-                            <field name="owned_private_repos"/>
-                            <field name="private_gists"/>
-                            <field name="disk_usage"/>
-                            <field name="collaborators"/>
+                        
+                        <!-- Synchronization Settings -->
+                        <group name="sync_settings" string="Synchronization Settings">
+                            <field name="github_token" password="True" string="GitHub Access Token"/>
+                            <field name="auto_sync" string="Enable Auto-Sync"/>
+                            <field name="last_sync_date" string="Last Sync Date"/>
+                            <field name="sync_error_message" string="Sync Error Details" 
+                                   invisible="sync_status != 'error'"/>
                         </group>
                     </group>
                     
-                    <group>
-                        <group name="dates" string="Dates">
-                            <field name="created_at"/>
-                            <field name="updated_at"/>
+                    <!-- Statistics and Metrics -->
+                    <group name="statistics_section">
+                        <!-- Public Statistics -->
+                        <group name="stats" string="Public Statistics">
+                            <field name="public_repos" string="Public Repositories"/>
+                            <field name="public_gists" string="Public Gists"/>
+                            <field name="followers" string="Followers"/>
+                            <field name="following" string="Following"/>
                         </group>
-                        <group name="urls" string="URLs">
-                            <field name="html_url" widget="url"/>
-                            <field name="avatar_url" widget="url"/>
+                        
+                        <!-- Organization-Only Statistics -->
+                        <group name="private_stats" string="Organization Statistics" 
+                               invisible="type != 'Organization'">
+                            <field name="total_private_repos" string="Total Private Repos"/>
+                            <field name="owned_private_repos" string="Owned Private Repos"/>
+                            <field name="private_gists" string="Private Gists"/>
+                            <field name="disk_usage" string="Disk Usage (KB)"/>
+                            <field name="collaborators" string="Collaborators"/>
                         </group>
                     </group>
                     
+                    <!-- Additional Information -->
+                    <group name="additional_info">
+                        <!-- Important Dates -->
+                        <group name="dates" string="Account Dates">
+                            <field name="created_at" string="Account Created"/>
+                            <field name="updated_at" string="Profile Updated"/>
+                        </group>
+                        
+                        <!-- Profile URLs -->
+                        <group name="urls" string="Profile URLs">
+                            <field name="html_url" widget="url" string="GitHub Profile URL"/>
+                            <field name="avatar_url" widget="url" string="Avatar Image URL"/>
+                        </group>
+                    </group>
+                    
+                    <!-- Related Data Tabs -->
                     <notebook>
+                        <!-- Repositories Tab -->
                         <page string="Repositories" name="repositories">
                             <field name="repository_ids" nolabel="1">
-                                <list>
-                                    <field name="name"/>
-                                    <field name="description"/>
-                                    <field name="language"/>
-                                    <field name="stars_count"/>
-                                    <field name="forks_count"/>
-                                    <field name="is_private"/>
-                                    <field name="updated_at"/>
+                                <list string="Organization Repositories">
+                                    <field name="name" string="Repository Name"/>
+                                    <field name="description" string="Description"/>
+                                    <field name="language" string="Primary Language"/>
+                                    <field name="stars_count" string="Stars"/>
+                                    <field name="forks_count" string="Forks"/>
+                                    <field name="is_private" string="Private"/>
+                                    <field name="updated_at" string="Last Updated"/>
                                     <button name="action_open_github" type="object" 
-                                            icon="fa-external-link" title="Open on GitHub"/>
+                                            icon="fa-external-link" title="Open repository on GitHub"/>
                                 </list>
                             </field>
                         </page>

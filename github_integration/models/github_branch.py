@@ -101,7 +101,7 @@ class GitHubBranch(models.Model):
 
     def action_open_branch_on_github(self):
         if self.repository_id and self.repository_id.html_url:
-            branch_url = f"{self.repository_id.html_url}/list/{self.name}"
+            branch_url = f"{self.repository_id.html_url}/tree/{self.name}"
             return {
                 'type': 'ir.actions.act_url',
                 'url': branch_url,

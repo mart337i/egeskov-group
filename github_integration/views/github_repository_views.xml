@@ -5,7 +5,7 @@
         <field name="name">github.repository.kanban</field>
         <field name="model">github.repository</field>
         <field name="arch" type="xml">
-            <kanban default_group_by="language" class="o_kanban_small_column">
+            <kanban default_group_by="activity_status" default_order="activity_sequence,pushed_at desc" class="o_kanban_small_column">
                 <field name="id"/>
                 <field name="name"/>
                 <field name="full_name"/>
@@ -19,9 +19,13 @@
                 <field name="open_issues_count"/>
                 <field name="html_url"/>
                 <field name="updated_at"/>
+                <field name="pushed_at"/>
+                <field name="activity_status"/>
+                <field name="activity_sequence"/>
+                <field name="days_since_last_push"/>
                 <templates>
                     <t t-name="kanban-box">
-                        <div class="oe_kanban_card oe_kanban_global_click">
+                        <div class="oe_kanban_card oe_kanban_global_click" t-attf-data-activity="#{record.activity_status.raw_value}">
                             <div class="o_kanban_card_header">
                                 <div class="o_kanban_card_header_title">
                                     <div class="o_primary">
@@ -31,6 +35,22 @@
                                         </span>
                                         <span t-if="record.is_fork.raw_value" class="badge badge-info ms-1" title="Forked Repository">
                                             <i class="fa fa-code-fork"/>
+                                        </span>
+                                        <!-- Activity indicator -->
+                                        <span t-if="record.activity_status.raw_value == 'very_active'" class="badge" style="background-color: #28a745; color: white;" title="Very Active - Updated within 24 hours">
+                                            🔥 Hot
+                                        </span>
+                                        <span t-if="record.activity_status.raw_value == 'active'" class="badge" style="background-color: #007bff; color: white;" title="Active - Updated within a week">
+                                            ⚡ Active
+                                        </span>
+                                        <span t-if="record.activity_status.raw_value == 'moderate'" class="badge" style="background-color: #ffc107; color: black;" title="Moderate - Updated within a month">
+                                            📈 Moderate
+                                        </span>
+                                        <span t-if="record.activity_status.raw_value == 'inactive'" class="badge" style="background-color: #6c757d; color: white;" title="Inactive - Updated within 6 months">
+                                            😴 Quiet
+                                        </span>
+                                        <span t-if="record.activity_status.raw_value == 'dormant'" class="badge" style="background-color: #343a40; color: white;" title="Dormant - No updates for over 6 months">
+                                            💤 Sleeping
                                         </span>
                                     </div>
                                     <div class="o_secondary">
@@ -64,7 +84,15 @@
                                             </span>
                                         </div>
                                         <div class="text-muted small">
-                                            Updated: <t t-esc="record.updated_at.value"/>
+                                            <div t-if="record.pushed_at.value">
+                                                <strong>Last push:</strong> <t t-esc="record.days_since_last_push.value"/> days ago
+                                            </div>
+                                            <div t-if="!record.pushed_at.value">
+                                                <strong>Last push:</strong> Unknown
+                                            </div>
+                                            <div class="mt-1">
+                                                <strong>Updated:</strong> <t t-esc="record.updated_at.value"/>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
@@ -102,6 +130,7 @@
             <form string="GitHub Repository">
                 <header>
                     <button name="action_fetch_branches" string="Refresh Branches" type="object" class="btn-primary"/>
+                    <button name="action_refresh_activity_status" string="Refresh Activity" type="object" class="btn-secondary"/>
                 </header>
                 <sheet>
                     <div class="oe_button_box" name="button_box">
@@ -163,6 +192,10 @@
                             <field name="open_issues_count"/>
                             <field name="size" string="Size (KB)"/>
                         </group>
+                        <group name="activity" string="Activity">
+                            <field name="activity_status"/>
+                            <field name="days_since_last_push"/>
+                        </group>
                         <group name="flags" string="Repository Type">
                             <field name="is_private"/>
                             <field name="is_fork"/>
@@ -220,9 +253,13 @@
                 <field name="open_issues_count"/>
                 <field name="is_private"/>
                 <field name="is_fork"/>
+                <field name="activity_status"/>
+                <field name="pushed_at"/>
                 <field name="updated_at"/>
                 <button name="action_fetch_branches" type="object" 
                         icon="fa-refresh" title="Refresh Branches"/>
+                <button name="action_refresh_activity_status" type="object" 
+                        icon="fa-clock-o" title="Refresh Activity Status"/>
                 <button name="action_open_github" type="object" 
                         icon="fa-external-link" title="Open on GitHub"/>
             </list>
@@ -246,7 +283,17 @@
                 <filter string="Forks" name="forks" domain="[('is_fork', '=', True)]"/>
                 <filter string="Original" name="original" domain="[('is_fork', '=', False)]"/>
                 <separator/>
+                <filter string="🔥 Very Active" name="very_active" domain="[('activity_status', '=', 'very_active')]"/>
+                <filter string="⚡ Active" name="active" domain="[('activity_status', '=', 'active')]"/>
+                <filter string="📈 Moderate" name="moderate" domain="[('activity_status', '=', 'moderate')]"/>
+                <filter string="😴 Inactive" name="inactive" domain="[('activity_status', '=', 'inactive')]"/>
+                <filter string="💤 Dormant" name="dormant" domain="[('activity_status', '=', 'dormant')]"/>
+                <separator/>
+                <filter string="🚀 Recently Active" name="recently_active" domain="[('activity_status', 'in', ['very_active', 'active'])]"/>
+                <filter string="⚠️ Needs Attention" name="needs_attention" domain="[('activity_status', 'in', ['inactive', 'dormant'])]"/>
+                <separator/>
                 <group expand="0" string="Group By">
+                    <filter string="Activity Status" name="group_activity" context="{'group_by': 'activity_status'}"/>
                     <filter string="Owner" name="group_owner" context="{'group_by': 'owner'}"/>
                     <filter string="Language" name="group_language" context="{'group_by': 'language'}"/>
                     <filter string="Private/Public" name="group_private" context="{'group_by': 'is_private'}"/>

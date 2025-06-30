@@ -70,3 +70,107 @@
 .github_task_integration a:hover {
     color: #0366d6;
 }
+
+/* Activity-based kanban column styling */
+.o_kanban_group[data-group-by="activity_status"] {
+    border-radius: 8px;
+    margin: 0 4px;
+}
+
+/* Very Active - Green/Hot */
+.o_kanban_group[data-group-by="activity_status"][data-group-value="very_active"] {
+    background: linear-gradient(135deg, #d4edda 0%, #c3e6cb 100%);
+    border-top: 4px solid #28a745;
+}
+
+.o_kanban_group[data-group-by="activity_status"][data-group-value="very_active"] .o_kanban_header {
+    background-color: #28a745;
+    color: white;
+    border-radius: 4px 4px 0 0;
+}
+
+/* Active - Blue */
+.o_kanban_group[data-group-by="activity_status"][data-group-value="active"] {
+    background: linear-gradient(135deg, #d1ecf1 0%, #bee5eb 100%);
+    border-top: 4px solid #007bff;
+}
+
+.o_kanban_group[data-group-by="activity_status"][data-group-value="active"] .o_kanban_header {
+    background-color: #007bff;
+    color: white;
+    border-radius: 4px 4px 0 0;
+}
+
+/* Moderate - Yellow/Orange */
+.o_kanban_group[data-group-by="activity_status"][data-group-value="moderate"] {
+    background: linear-gradient(135deg, #fff3cd 0%, #ffeaa7 100%);
+    border-top: 4px solid #ffc107;
+}
+
+.o_kanban_group[data-group-by="activity_status"][data-group-value="moderate"] .o_kanban_header {
+    background-color: #ffc107;
+    color: black;
+    border-radius: 4px 4px 0 0;
+}
+
+/* Inactive - Gray */
+.o_kanban_group[data-group-by="activity_status"][data-group-value="inactive"] {
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    border-top: 4px solid #6c757d;
+}
+
+.o_kanban_group[data-group-by="activity_status"][data-group-value="inactive"] .o_kanban_header {
+    background-color: #6c757d;
+    color: white;
+    border-radius: 4px 4px 0 0;
+}
+
+/* Dormant - Dark */
+.o_kanban_group[data-group-by="activity_status"][data-group-value="dormant"] {
+    background: linear-gradient(135deg, #f8f9fa 0%, #dee2e6 100%);
+    border-top: 4px solid #343a40;
+}
+
+.o_kanban_group[data-group-by="activity_status"][data-group-value="dormant"] .o_kanban_header {
+    background-color: #343a40;
+    color: white;
+    border-radius: 4px 4px 0 0;
+}
+
+/* Activity status cards styling */
+.o_kanban_card .activity-indicator {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    font-size: 12px;
+    padding: 2px 6px;
+    border-radius: 12px;
+    font-weight: bold;
+}
+
+/* Enhanced card styling for activity status */
+.o_kanban_card[data-activity="very_active"] {
+    border-left: 4px solid #28a745;
+    box-shadow: 0 2px 4px rgba(40, 167, 69, 0.1);
+}
+
+.o_kanban_card[data-activity="active"] {
+    border-left: 4px solid #007bff;
+    box-shadow: 0 2px 4px rgba(0, 123, 255, 0.1);
+}
+
+.o_kanban_card[data-activity="moderate"] {
+    border-left: 4px solid #ffc107;
+    box-shadow: 0 2px 4px rgba(255, 193, 7, 0.1);
+}
+
+.o_kanban_card[data-activity="inactive"] {
+    border-left: 4px solid #6c757d;
+    box-shadow: 0 2px 4px rgba(108, 117, 125, 0.1);
+}
+
+.o_kanban_card[data-activity="dormant"] {
+    border-left: 4px solid #343a40;
+    box-shadow: 0 2px 4px rgba(52, 58, 64, 0.1);
+    opacity: 0.8;
+}

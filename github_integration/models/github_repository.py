@@ -30,6 +30,19 @@ class GitHubRepository(models.Model):
     pushed_at = fields.Datetime(string='Last Push')
     size = fields.Integer(string='Size (KB)', default=0)
     
+    # Activity tracking fields
+    activity_status = fields.Selection([
+        ('very_active', '🔥 Very Active (< 1 day)'),
+        ('active', '⚡ Active (1-7 days)'),
+        ('moderate', '📈 Moderate (1-4 weeks)'),
+        ('inactive', '😴 Inactive (1-6 months)'),
+        ('dormant', '💤 Dormant (> 6 months)')
+    ], string='Activity Status', compute='_compute_activity_status', store=True)
+    
+    activity_sequence = fields.Integer(string='Activity Sequence', compute='_compute_activity_sequence', store=True)
+    
+    days_since_last_push = fields.Integer(string='Days Since Last Push', compute='_compute_days_since_push', store=True)
+    
     # Relations
     organization_id = fields.Many2one('github.organization', string='Organization/User', ondelete='cascade')
     branch_ids = fields.One2many('github.branch', 'repository_id', string='Branches')
@@ -38,6 +51,48 @@ class GitHubRepository(models.Model):
     _sql_constraints = [
         ('unique_full_name', 'unique(full_name)', 'Repository full name must be unique!')
     ]
+
+    @api.depends('pushed_at')
+    def _compute_days_since_push(self):
+        """Compute days since last push"""
+        from datetime import datetime
+        now = datetime.now()
+        
+        for repo in self:
+            if repo.pushed_at:
+                delta = now - repo.pushed_at
+                repo.days_since_last_push = delta.days
+            else:
+                repo.days_since_last_push = 9999  # Very old/unknown
+
+    @api.depends('days_since_last_push')
+    def _compute_activity_status(self):
+        """Compute activity status based on last push date"""
+        for repo in self:
+            days = repo.days_since_last_push
+            if days <= 1:
+                repo.activity_status = 'very_active'
+            elif days <= 7:
+                repo.activity_status = 'active'
+            elif days <= 30:
+                repo.activity_status = 'moderate'
+            elif days <= 180:
+                repo.activity_status = 'inactive'
+            else:
+                repo.activity_status = 'dormant'
+
+    @api.depends('activity_status')
+    def _compute_activity_sequence(self):
+        """Compute sequence for proper kanban ordering"""
+        sequence_map = {
+            'very_active': 1,
+            'active': 2,
+            'moderate': 3,
+            'inactive': 4,
+            'dormant': 5
+        }
+        for repo in self:
+            repo.activity_sequence = sequence_map.get(repo.activity_status, 99)
 
     @api.model
     def fetch_user_repositories(self, username, github_token=None):
@@ -154,6 +209,10 @@ class GitHubRepository(models.Model):
         # Create or update repository records
         if repositories:
             self._create_or_update_repositories(repositories)
+            # Trigger recomputation of activity status for updated repositories
+            updated_repos = self.search([('full_name', 'in', [repo['full_name'] for repo in repositories])])
+            updated_repos._compute_days_since_push()
+            updated_repos._compute_activity_status()
             _logger.info("Processed %d repositories", len(repositories))
         
         return repositories
@@ -269,4 +328,19 @@ class GitHubRepository(models.Model):
             'view_mode': 'list,form',
             'domain': [('repository_id', '=', self.id)],
             'context': {'default_repository_id': self.id}
+        }
+
+    def action_refresh_activity_status(self):
+        """Manually refresh activity status for selected repositories"""
+        self._compute_days_since_push()
+        self._compute_activity_status()
+        return {
+            'type': 'ir.actions.client',
+            'tag': 'display_notification',
+            'params': {
+                'title': _('Success'),
+                'message': _('Activity status refreshed for %d repositories') % len(self),
+                'type': 'success',
+                'sticky': False,
+            }
         }

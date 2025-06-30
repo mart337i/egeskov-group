@@ -51,5 +51,22 @@
                   eval="(DateTime.now() + timedelta(hours=12)).strftime('%Y-%m-%d %H:00:00')"/>
            <field name="priority">4</field>
        </record>
+       
+       <record id="action_refresh_repository_activity" model="ir.cron">
+           <field name="name">Refresh Repository Activity Status</field>
+           <field name="model_id" ref="model_github_repository"/>
+           <field name="state">code</field>
+           <field name="code">
+repos = model.search([])
+repos._compute_days_since_push()
+repos._compute_activity_status()
+           </field>
+           <field name="user_id" ref="base.user_root"/>
+           <field name='interval_number'>4</field>
+           <field name='interval_type'>hours</field>
+           <field name="nextcall"
+                  eval="(DateTime.now() + timedelta(hours=4)).strftime('%Y-%m-%d %H:00:00')"/>
+           <field name="priority">5</field>
+       </record>
    </data>
 </odoo>

@@ -1,72 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
-<record id="view_project_project_form_github" model="ir.ui.view">
-    <field name="name">project.project.form.github</field>
-    <field name="model">project.project</field>
-    <field name="inherit_id" ref="project.edit_project"/>
-    <field name="arch" type="xml">
-        <xpath expr="//notebook" position="inside">
-            <page string="GitHub Integration" name="github_integration">
-                <group>
-                    <group name="github_config" string="Repository Configuration">
-                        <field name="is_software_project" string="Is Software Project"/>
-                        <div invisible="not is_software_project" class="d-flex align-items-center gap-2">
-                            <field name="github_repository_id" 
-                                   placeholder="Select a GitHub repository..."
-                                   class="flex-grow-1"
-                                   options="{'no_create': True, 'no_edit': True}"/>
-                            <button name="%(action_github_repository_wizard)d" 
-                                    type="action" 
-                                    class="btn btn-sm btn-secondary"
-                                    title="Fetch repositories from GitHub"
-                                    icon="fa-download"/>
-                        </div>
-                        <field name="github_repo_url" string="GitHub Repository URL" 
-                               readonly="1"
-                               invisible="not github_repository_id"/>
-                        <field name="github_owner" string="Repository Owner" 
-                               readonly="1"
-                               invisible="not github_repository_id"/>
-                        <field name="github_repo_name" string="Repository Name" 
-                               readonly="1"
-                               invisible="not github_repository_id"/>
-
-                    </group>
-                </group>
-                
-                <group invisible="not github_repository_id or last_deployment_status == 'unknown'" col="2">
-                    <group string="Deployment Status">
-                        <field name="last_deployment_status" string="Last Deployment Status" readonly="1"/>
-                        <field name="last_deployment_date" string="Last Deployment Date" readonly="1"/>
-                    </group>
-                    <group string="Latest Commit">
-                        <field name="last_commit_sha" string="Commit SHA" readonly="1"/>
-                        <field name="last_commit_message" string="Commit Message" readonly="1"/>
-                    </group>
-                </group>
-                
-                <div invisible="not github_repository_id" class="oe_button_box">
-                    <button name="action_refresh_github_status"
-                            string="Refresh GitHub Status"
-                            type="object"
-                            class="btn-primary"
-                            help="Fetch latest deployment status and commit information from GitHub"
-                            group="base.group_no_one"
-                            />
-                    <button name="action_refresh_github_branches"
-                            string="Refresh Branches"
-                            type="object"
-                            class="btn-secondary"
-                            help="Fetch available branches from GitHub repository"
-                            invisible="not is_software_project"
-                            group="base.group_no_one"
-                            />
-                </div>
-            </page>
-        </xpath>
-    </field>
-</record>
-    
     <record id="view_project_kanban_github" model="ir.ui.view">
         <field name="name">project.project.kanban.github</field>
         <field name="model">project.project</field>
@@ -85,25 +18,50 @@
             <xpath expr="//footer/div[@class='d-flex ms-auto align-items-center']" position="inside">
                 <div class="github_integration_kanban me-2" t-if="record.is_software_project.raw_value">
                     <div class="d-flex align-items-center gap-2">
+                        <!-- Software Project Indicator -->
+                        <span class="badge badge-info" title="Software Project">
+                            <i class="fa fa-code me-1"></i>Dev
+                        </span>
+                        
                         <!-- Deployment Status Badge -->
                         <span t-if="record.last_deployment_status.raw_value and record.last_deployment_status.raw_value != 'unknown'" 
-                              class="badge badge-sm" 
-                              t-attf-class="badge-#{record.last_deployment_status.raw_value}"
+                              class="badge badge-sm deployment-status" 
+                              t-attf-class="deployment-#{record.last_deployment_status.raw_value}"
                               t-att-title="record.last_deployment_date.value">
-                            <i class="fa fa-circle me-1" t-attf-class="text-#{record.last_deployment_status.raw_value}"/>
+                            <i class="fa fa-rocket me-1"/>
                             <t t-esc="record.last_deployment_status.value"/>
                         </span>
                         
+                        <!-- Commit Indicator -->
+                        <span t-if="record.last_commit_sha.raw_value" 
+                              class="badge badge-secondary" 
+                              title="Latest Commit">
+                            <i class="fa fa-git-commit me-1"/>
+                            <t t-esc="record.last_commit_sha.value"/>
+                        </span>
+                        
                         <!-- GitHub Repository Link -->
-                        <a t-if="record.github_repo_url" 
+                        <a t-if="record.github_repo_url.raw_value" 
                            t-attf-href="#{record.github_repo_url.raw_value}" 
                            target="_blank" 
-                           class="btn btn-sm p-1"
+                           class="btn btn-sm btn-outline-dark github-link"
                            title="Open GitHub Repository">
                             <i class="fa fa-github"/>
                         </a>
                     </div>
                 </div>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="view_project_form_github" model="ir.ui.view">
+        <field name="name">project.project.form.github</field>
+        <field name="model">project.project</field>
+        <field name="inherit_id" ref="project.edit_project"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='partner_id']" position="after">
+                <field name="is_software_project"/>
+                <field name="github_repo_url" invisible="is_software_project==False"/>
             </xpath>
         </field>
     </record>

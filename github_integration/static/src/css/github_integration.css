@@ -174,3 +174,193 @@
     box-shadow: 0 2px 4px rgba(52, 58, 64, 0.1);
     opacity: 0.8;
 }
+
+/* Project Integration Styling */
+.github-branch-section {
+    margin: 15px 0;
+}
+
+.github-branch-section .alert {
+    border-radius: 8px;
+    border-width: 2px;
+}
+
+/* Project Kanban GitHub Integration */
+.github_integration_kanban {
+    margin-top: 5px;
+}
+
+.github_integration_kanban .badge {
+    font-size: 10px;
+    padding: 3px 6px;
+    border-radius: 12px;
+    font-weight: 500;
+}
+
+/* Deployment Status Badges */
+.deployment-success {
+    background-color: #28a745;
+    color: white;
+}
+
+.deployment-failure {
+    background-color: #dc3545;
+    color: white;
+}
+
+.deployment-pending {
+    background-color: #ffc107;
+    color: black;
+}
+
+.deployment-in_progress {
+    background-color: #17a2b8;
+    color: white;
+}
+
+.deployment-unknown {
+    background-color: #6c757d;
+    color: white;
+}
+
+/* GitHub Link Styling */
+.github-link {
+    border-color: #24292e;
+    color: #24292e;
+    transition: all 0.2s ease;
+}
+
+.github-link:hover {
+    background-color: #24292e;
+    color: white;
+    border-color: #24292e;
+}
+
+/* Task Integration Styling */
+.github_task_integration {
+    margin-top: 8px;
+    padding-top: 8px;
+    border-top: 1px solid #e9ecef;
+}
+
+.github_task_integration .branch-indicator {
+    background-color: #0366d6;
+    color: white;
+    font-size: 11px;
+    padding: 4px 8px;
+    border-radius: 12px;
+}
+
+.github_task_integration .github-actions .btn {
+    padding: 2px 6px;
+    font-size: 12px;
+    border-radius: 4px;
+}
+
+/* Card Styling for Project Forms */
+.card {
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    margin-bottom: 20px;
+}
+
+.card-header {
+    border-radius: 8px 8px 0 0;
+    font-weight: 600;
+}
+
+.card-body {
+    padding: 20px;
+}
+
+/* Alert Styling */
+.alert {
+    border-radius: 8px;
+    border-width: 2px;
+}
+
+.alert-info {
+    background-color: #e7f3ff;
+    border-color: #0366d6;
+    color: #0366d6;
+}
+
+/* Badge Improvements */
+.badge-info {
+    background-color: #0366d6;
+    color: white;
+}
+
+.badge-secondary {
+    background-color: #6c757d;
+    color: white;
+}
+
+/* Form Control Styling */
+.form-control-plaintext {
+    font-weight: 500;
+    color: #495057;
+}
+
+/* Form Label Styling */
+.o_form_label {
+    font-weight: 600;
+    color: #495057;
+    margin-bottom: 0.5rem;
+}
+
+.o_form_label.text-muted {
+    font-weight: 500;
+    color: #6c757d !important;
+}
+
+/* Button Improvements */
+.btn-outline-dark:hover {
+    background-color: #343a40;
+    border-color: #343a40;
+}
+
+.btn-outline-success:hover {
+    background-color: #28a745;
+    border-color: #28a745;
+}
+
+.btn-outline-info:hover {
+    background-color: #17a2b8;
+    border-color: #17a2b8;
+}
+
+/* Stat Button Enhancements */
+.oe_stat_button.btn-outline-dark {
+    border-color: #343a40;
+    color: #343a40;
+}
+
+.oe_stat_button.btn-outline-success {
+    border-color: #28a745;
+    color: #28a745;
+}
+
+.oe_stat_button.btn-outline-info {
+    border-color: #17a2b8;
+    color: #17a2b8;
+}
+
+/* Code styling */
+code {
+    font-size: 12px;
+    font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .github_integration_kanban .d-flex {
+        flex-direction: column;
+        gap: 4px;
+    }
+    
+    .github_integration_kanban .badge {
+        font-size: 9px;
+        padding: 2px 4px;
+    }
+}

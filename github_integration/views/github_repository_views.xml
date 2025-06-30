@@ -29,7 +29,7 @@
                             <div class="o_kanban_card_header">
                                 <div class="o_kanban_card_header_title">
                                     <div class="o_primary">
-                                        <strong><t t-esc="record.name.value"/></strong>
+                                        <strong><t t-esc="record.name.value"/>  </strong>
                                         <span t-if="record.is_private.raw_value" class="badge badge-warning ms-1" title="Private Repository">
                                             <i class="fa fa-lock"/>
                                         </span>

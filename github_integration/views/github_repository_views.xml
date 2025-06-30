@@ -128,39 +128,55 @@
         <field name="model">github.repository</field>
         <field name="arch" type="xml">
             <form string="GitHub Repository">
+                <!-- Action Header -->
                 <header>
-                    <button name="action_fetch_branches" string="Refresh Branches" type="object" class="btn-primary"/>
-                    <button name="action_refresh_activity_status" string="Refresh Activity" type="object" class="btn-secondary"/>
+                    <button name="action_fetch_branches" string="Refresh Branches" type="object" 
+                            class="btn-primary" title="Fetch latest branches from GitHub"/>
+                    <button name="action_refresh_activity_status" string="Refresh Activity" type="object" 
+                            class="btn-secondary" title="Update repository activity status"/>
                 </header>
+                
                 <sheet>
+                    <!-- Smart Buttons -->
                     <div class="oe_button_box" name="button_box">
-                        <button name="action_open_github" type="object" class="oe_stat_button" icon="fa-github">
+                        <button name="action_open_github" type="object" class="oe_stat_button" 
+                                icon="fa-github" title="Open repository on GitHub">
                             <div class="o_field_widget o_stat_info">
                                 <span class="o_stat_text">Open on</span>
                                 <span class="o_stat_text">GitHub</span>
                             </div>
                         </button>
-                        <button name="action_view_projects" type="object" class="oe_stat_button" icon="fa-folder-open">
+                        <button name="action_view_projects" type="object" class="oe_stat_button" 
+                                icon="fa-folder-open" title="View related projects">
                             <div class="o_field_widget o_stat_info">
-                                <span class="o_stat_value"><field name="project_ids" widget="statinfo" nolabel="1"/></span>
+                                <span class="o_stat_value">
+                                    <field name="project_ids" widget="statinfo" nolabel="1"/>
+                                </span>
                                 <span class="o_stat_text">Projects</span>
                             </div>
                         </button>
-                        <button name="action_view_branches" type="object" class="oe_stat_button" icon="fa-code-fork">
+                        <button name="action_view_branches" type="object" class="oe_stat_button" 
+                                icon="fa-code-fork" title="View repository branches">
                             <div class="o_field_widget o_stat_info">
-                                <span class="o_stat_value"><field name="branch_ids" widget="statinfo" nolabel="1"/></span>
+                                <span class="o_stat_value">
+                                    <field name="branch_ids" widget="statinfo" nolabel="1"/>
+                                </span>
                                 <span class="o_stat_text">Branches</span>
                             </div>
                         </button>
                     </div>
                     
+                    <!-- Repository Title and Status -->
                     <div class="oe_title">
                         <h1>
                             <field name="full_name" placeholder="owner/repository"/>
                         </h1>
                         <div class="d-flex gap-2 mt-2">
+                            <!-- Hidden fields for conditional display -->
                             <field name="is_private" invisible="1"/>
                             <field name="is_fork" invisible="1"/>
+                            
+                            <!-- Repository Status Badges -->
                             <span invisible="is_private == False" class="badge badge-warning">
                                 <i class="fa fa-lock"/> Private
                             </span>
@@ -171,65 +187,81 @@
                         </div>
                     </div>
                     
-                    <group>
-                        <group name="basic_info" string="Basic Information">
-                            <field name="name"/>
-                            <field name="owner"/>
-                            <field name="description"/>
-                            <field name="default_branch"/>
+                    <!-- Repository Information -->
+                    <group name="repository_info">
+                        <!-- Basic Repository Details -->
+                        <group name="basic_info" string="Repository Details">
+                            <field name="name" string="Repository Name"/>
+                            <field name="owner" string="Owner"/>
+                            <field name="description" string="Description"/>
+                            <field name="default_branch" string="Default Branch"/>
                         </group>
-                        <group name="urls" string="URLs">
-                            <field name="html_url" widget="url"/>
-                            <field name="clone_url" widget="url"/>
-                            <field name="ssh_url"/>
+                        
+                        <!-- Repository URLs -->
+                        <group name="urls" string="Repository URLs">
+                            <field name="html_url" widget="url" string="GitHub URL"/>
+                            <field name="clone_url" widget="url" string="Clone URL (HTTPS)"/>
+                            <field name="ssh_url" string="SSH URL"/>
                         </group>
                     </group>
                     
-                    <group>
-                        <group name="stats" string="Statistics">
-                            <field name="stars_count"/>
-                            <field name="forks_count"/>
-                            <field name="open_issues_count"/>
+                    <!-- Statistics and Activity -->
+                    <group name="stats_and_activity">
+                        <!-- Repository Statistics -->
+                        <group name="stats" string="Repository Statistics">
+                            <field name="stars_count" string="Stars"/>
+                            <field name="forks_count" string="Forks"/>
+                            <field name="open_issues_count" string="Open Issues"/>
                             <field name="size" string="Size (KB)"/>
                         </group>
-                        <group name="activity" string="Activity">
-                            <field name="activity_status"/>
-                            <field name="days_since_last_push"/>
-                        </group>
-                        <group name="flags" string="Repository Type">
-                            <field name="is_private"/>
-                            <field name="is_fork"/>
+                        
+                        <!-- Activity Information -->
+                        <group name="activity" string="Activity Status">
+                            <field name="activity_status" string="Current Status"/>
+                            <field name="days_since_last_push" string="Days Since Last Push"/>
                         </group>
                     </group>
                     
-                    <group>
-                        <group name="dates" string="Dates">
-                            <field name="created_at"/>
-                            <field name="updated_at"/>
-                            <field name="pushed_at"/>
+                    <!-- Repository Properties -->
+                    <group name="repository_properties">
+                        <!-- Repository Type and Flags -->
+                        <group name="flags" string="Repository Properties">
+                            <field name="is_private" string="Private Repository"/>
+                            <field name="is_fork" string="Forked Repository"/>
+                        </group>
+                        
+                        <!-- Important Dates -->
+                        <group name="dates" string="Important Dates">
+                            <field name="created_at" string="Created"/>
+                            <field name="updated_at" string="Last Updated"/>
+                            <field name="pushed_at" string="Last Push"/>
                         </group>
                     </group>
                     
+                    <!-- Related Information Tabs -->
                     <notebook>
+                        <!-- Branches Tab -->
                         <page string="Branches" name="branches">
                             <field name="branch_ids" nolabel="1">
-                                <list>
-                                    <field name="name"/>
-                                    <field name="sha"/>
-                                    <field name="is_default"/>
+                                <list string="Repository Branches">
+                                    <field name="name" string="Branch Name"/>
+                                    <field name="sha" string="Commit SHA"/>
+                                    <field name="is_default" string="Default Branch"/>
                                     <button name="action_open_branch_on_github" type="object" 
                                             icon="fa-external-link" title="Open branch on GitHub"/>
                                 </list>
                             </field>
                         </page>
-                        <page string="Projects" name="projects">
+                        
+                        <!-- Related Projects Tab -->
+                        <page string="Related Projects" name="projects">
                             <field name="project_ids" nolabel="1">
-                                <list>
-                                    <field name="name"/>
-                                    <field name="partner_id"/>
-                                    <field name="user_id"/>
-                                    <field name="date_start"/>
-                                    <field name="stage_id"/>
+                                <list string="Related Projects">
+                                    <field name="name" string="Project Name"/>
+                                    <field name="partner_id" string="Customer"/>
+                                    <field name="user_id" string="Project Manager"/>
+                                    <field name="date_start" string="Start Date"/>
+                                    <field name="stage_id" string="Stage"/>
                                 </list>
                             </field>
                         </page>

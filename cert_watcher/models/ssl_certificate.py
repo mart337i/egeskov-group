@@ -1,24 +1,19 @@
-import os
-import re
+import ssl
+import socket
+import requests
 import json
-import tempfile
-import zipfile
-import subprocess
-import threading
-import secrets
 from datetime import datetime, timedelta
-from pathlib import Path
+from urllib.parse import urlparse
 
 from odoo import models, fields, api, _
 from odoo.exceptions import UserError, ValidationError
-from odoo.tools import config
 import logging
 
 _logger = logging.getLogger(__name__)
 
 class SSLCertificate(models.Model):
     _name = 'ssl.certificate'
-    _description = 'SSL Certificate'
+    _description = 'SSL Certificate Monitor'
     _order = 'domain'
     _rec_name = 'domain'
 
@@ -26,32 +21,54 @@ class SSLCertificate(models.Model):
     domain = fields.Char(
         string='Domain',
         required=True,
-        help='Domain name for the SSL certificate'
+        help='Domain name to monitor (e.g., example.com)'
     )
-    email = fields.Char(
-        string='Contact Email',
-        required=True,
-        help='Email address for Let\'s Encrypt notifications'
+    port = fields.Integer(
+        string='Port',
+        default=443,
+        help='Port to check SSL certificate on'
     )
     
     # Certificate Status
     state = fields.Selection([
-        ('draft', 'Draft'),
-        ('creating', 'Creating'),
-        ('active', 'Active'),
+        ('valid', 'Valid'),
         ('expired', 'Expired'),
-        ('error', 'Error'),
-        ('renewing', 'Renewing')
-    ], string='Status', default='draft', tracking=True)
+        ('expiring_soon', 'Expiring Soon'),
+        ('invalid', 'Invalid'),
+        ('unreachable', 'Unreachable'),
+        ('error', 'Error')
+    ], string='Status', default='error', compute='_compute_certificate_status', store=True)
     
-    # Certificate Details
-    exists = fields.Boolean(
-        string='Certificate Exists',
+    # Certificate Information
+    issuer = fields.Char(
+        string='Issuer',
         compute='_compute_certificate_info',
         store=True
     )
-    expiry_date = fields.Datetime(
-        string='Expiry Date',
+    subject = fields.Char(
+        string='Subject',
+        compute='_compute_certificate_info',
+        store=True
+    )
+    serial_number = fields.Char(
+        string='Serial Number',
+        compute='_compute_certificate_info',
+        store=True
+    )
+    signature_algorithm = fields.Char(
+        string='Signature Algorithm',
+        compute='_compute_certificate_info',
+        store=True
+    )
+    
+    # Validity Information
+    valid_from = fields.Datetime(
+        string='Valid From',
+        compute='_compute_certificate_info',
+        store=True
+    )
+    valid_until = fields.Datetime(
+        string='Valid Until',
         compute='_compute_certificate_info',
         store=True
     )
@@ -60,538 +77,261 @@ class SSLCertificate(models.Model):
         compute='_compute_certificate_info',
         store=True
     )
-    needs_renewal = fields.Boolean(
-        string='Needs Renewal',
+    
+    # Domain Information
+    san_domains = fields.Text(
+        string='Subject Alternative Names',
+        compute='_compute_certificate_info',
+        store=True,
+        help='All domains covered by this certificate'
+    )
+    
+    # Connection Information
+    is_reachable = fields.Boolean(
+        string='Reachable',
+        compute='_compute_certificate_info',
+        store=True
+    )
+    response_time = fields.Float(
+        string='Response Time (ms)',
         compute='_compute_certificate_info',
         store=True
     )
     
-    # DNS Provider Configuration
-    dns_provider_id = fields.Many2one(
-        'dns.provider',
-        string='DNS Provider',
-        required=True,
-        help='DNS provider to use for certificate validation'
+    # Last Check Information
+    last_check = fields.Datetime(
+        string='Last Check',
+        compute='_compute_certificate_info',
+        store=True
     )
-    dns_account_id = fields.Many2one(
-        'dns.account',
-        string='DNS Account',
-        domain="[('provider_id', '=', dns_provider_id)]",
-        help='Specific DNS account to use'
+    error_message = fields.Text(
+        string='Error Message',
+        compute='_compute_certificate_info',
+        store=True
     )
     
-    # Auto-renewal
-    auto_renew = fields.Boolean(
-        string='Auto Renew',
-        default=True,
-        help='Automatically renew certificate before expiration'
+    # Raw Certificate Data
+    certificate_data = fields.Text(
+        string='Certificate Data',
+        compute='_compute_certificate_info',
+        store=True,
+        help='Raw certificate information as JSON'
     )
-    
-    # Certificate Files
-    cert_file = fields.Binary(
-        string='Certificate File',
-        attachment=True
-    )
-    key_file = fields.Binary(
-        string='Private Key File',
-        attachment=True
-    )
-    chain_file = fields.Binary(
-        string='Certificate Chain',
-        attachment=True
-    )
-    fullchain_file = fields.Binary(
-        string='Full Chain Certificate',
-        attachment=True
-    )
-    
-    # Deployment Status
-    deployment_status = fields.Text(
-        string='Deployment Status',
-        help='JSON data about certificate deployment status'
-    )
-    last_deployment_check = fields.Datetime(
-        string='Last Deployment Check'
-    )
-    
-    # History and Logs
-    creation_log = fields.Text(
-        string='Creation Log',
-        help='Log output from certificate creation'
-    )
-    last_renewal_date = fields.Datetime(
-        string='Last Renewal Date'
-    )
-    renewal_count = fields.Integer(
-        string='Renewal Count',
-        default=0
-    )
-    
-    # Certificate History
-    history_ids = fields.One2many(
-        'ssl.certificate.history',
-        'certificate_id',
-        string='Certificate History'
-    )
-    
-    @api.depends('domain')
+
+    @api.depends('domain', 'port')
     def _compute_certificate_info(self):
-        """Compute certificate information from files"""
+        """Fetch certificate information via HTTP/SSL"""
         for record in self:
             if not record.domain:
-                record.update({
-                    'exists': False,
-                    'expiry_date': False,
-                    'days_until_expiry': 0,
-                    'needs_renewal': False
-                })
+                record._reset_certificate_fields()
                 continue
                 
             try:
-                cert_info = self._get_certificate_info(record.domain)
-                record.update({
-                    'exists': cert_info.get('exists', False),
-                    'expiry_date': cert_info.get('expiry_date'),
-                    'days_until_expiry': cert_info.get('days_until_expiry', 0),
-                    'needs_renewal': cert_info.get('needs_renewal', False)
-                })
+                cert_info = record._fetch_certificate_info()
+                record._update_certificate_fields(cert_info)
             except Exception as e:
-                _logger.error(f"Error computing certificate info for {record.domain}: {e}")
-                record.update({
-                    'exists': False,
-                    'expiry_date': False,
-                    'days_until_expiry': 0,
-                    'needs_renewal': False
-                })
+                _logger.error(f"Error fetching certificate info for {record.domain}: {e}")
+                record._reset_certificate_fields()
+                record.error_message = str(e)
+                record.last_check = fields.Datetime.now()
 
-    @api.constrains('domain')
-    def _check_domain_format(self):
-        """Validate domain format"""
+    @api.depends('valid_until', 'is_reachable', 'error_message')
+    def _compute_certificate_status(self):
+        """Compute certificate status based on validity and reachability"""
         for record in self:
-            if record.domain:
-                is_valid, error_msg = self._validate_domain(record.domain)
-                if not is_valid:
-                    raise ValidationError(f"Invalid domain format: {error_msg}")
-
-    @api.constrains('email')
-    def _check_email_format(self):
-        """Validate email format"""
-        for record in self:
-            if record.email:
-                is_valid, error_msg = self._validate_email(record.email)
-                if not is_valid:
-                    raise ValidationError(f"Invalid email format: {error_msg}")
-
-    def _validate_domain(self, domain):
-        """Validate domain name format"""
-        if not domain or not isinstance(domain, str):
-            return False, "Domain must be a non-empty string"
-        
-        domain = domain.strip().lower()
-        
-        # Basic format validation
-        domain_pattern = r'^[a-zA-Z0-9]([a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(\.[a-zA-Z0-9]([a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$'
-        if not re.match(domain_pattern, domain):
-            return False, "Invalid domain format"
-        
-        if len(domain) > 253:
-            return False, "Domain name too long"
-        
-        return True, domain
-
-    def _validate_email(self, email):
-        """Validate email format"""
-        if not email or not isinstance(email, str):
-            return False, "Email must be a non-empty string"
-        
-        email_pattern = r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$'
-        if not re.match(email_pattern, email.strip()):
-            return False, "Invalid email format"
-        
-        return True, email.strip().lower()
-
-    def _get_cert_directory(self):
-        """Get certificate storage directory"""
-        cert_dir = Path(config.get('data_dir', '/tmp')) / 'ssl_certificates'
-        cert_dir.mkdir(exist_ok=True)
-        return cert_dir
-
-    def _get_certificate_info(self, domain):
-        """Get certificate information for a domain"""
-        cert_dir = self._get_cert_directory() / domain
-        if not cert_dir.exists():
-            return {
-                'exists': False,
-                'expiry_date': None,
-                'days_until_expiry': 0,
-                'needs_renewal': False
-            }
-        
-        cert_file = cert_dir / "cert.pem"
-        if not cert_file.exists():
-            return {
-                'exists': False,
-                'expiry_date': None,
-                'days_until_expiry': 0,
-                'needs_renewal': False
-            }
-        
-        try:
-            # Get certificate expiry using openssl
-            result = subprocess.run([
-                'openssl', 'x509', '-in', str(cert_file), '-noout', '-dates'
-            ], capture_output=True, text=True)
-            
-            if result.returncode == 0:
-                lines = result.stdout.strip().split('\n')
-                not_after = None
-                for line in lines:
-                    if line.startswith('notAfter='):
-                        not_after = line.split('=', 1)[1]
-                        break
-                
-                if not_after:
-                    # Parse the date
-                    try:
-                        expiry_date = datetime.strptime(not_after, '%b %d %H:%M:%S %Y %Z')
-                        days_left = (expiry_date - datetime.now()).days
-                        
-                        return {
-                            'exists': True,
-                            'expiry_date': expiry_date,
-                            'days_until_expiry': days_left,
-                            'needs_renewal': days_left < 30
-                        }
-                    except Exception as e:
-                        _logger.error(f"Error parsing certificate date: {e}")
-        except Exception as e:
-            _logger.error(f"Error getting certificate info: {e}")
-        
-        return {
-            'exists': False,
-            'expiry_date': None,
-            'days_until_expiry': 0,
-            'needs_renewal': False
-        }
-
-    def action_create_certificate(self):
-        """Create SSL certificate"""
-        self.ensure_one()
-        
-        if self.state != 'draft':
-            raise UserError(_("Certificate can only be created from draft state"))
-        
-        if not self.dns_provider_id:
-            raise UserError(_("DNS provider is required"))
-        
-        self.state = 'creating'
-        
-        # Create certificate in background
-        threading.Thread(target=self._create_certificate_async).start()
-        
-        return {
-            'type': 'ir.actions.client',
-            'tag': 'display_notification',
-            'params': {
-                'title': _('Certificate Creation Started'),
-                'message': _('Certificate creation for %s has been started in the background.') % self.domain,
-                'type': 'success',
-                'sticky': False,
-            }
-        }
-
-    def _create_certificate_async(self):
-        """Create certificate asynchronously"""
-        try:
-            with self.env.registry.cursor() as new_cr:
-                new_env = api.Environment(new_cr, self.env.uid, self.env.context)
-                record = new_env['ssl.certificate'].browse(self.id)
-                
-                success, message = record._create_certificate()
-                
-                if success:
-                    record.state = 'active'
-                    record._load_certificate_files()
-                    record._add_history_entry('created', 'Certificate created successfully')
-                else:
-                    record.state = 'error'
-                    record.creation_log = message
-                    record._add_history_entry('error', f'Certificate creation failed: {message}')
-                
-                new_cr.commit()
-                
-        except Exception as e:
-            _logger.error(f"Error in certificate creation: {e}")
-            with self.env.registry.cursor() as new_cr:
-                new_env = api.Environment(new_cr, self.env.uid, self.env.context)
-                record = new_env['ssl.certificate'].browse(self.id)
+            if not record.is_reachable:
+                record.state = 'unreachable'
+            elif record.error_message:
                 record.state = 'error'
-                record.creation_log = str(e)
-                record._add_history_entry('error', f'Certificate creation failed: {str(e)}')
-                new_cr.commit()
-
-    def _create_certificate(self):
-        """Create SSL certificate using certbot"""
-        try:
-            # Validate inputs
-            is_valid_domain, domain_error = self._validate_domain(self.domain)
-            if not is_valid_domain:
-                return False, f"Domain validation failed: {domain_error}"
-            
-            is_valid_email, email_error = self._validate_email(self.email)
-            if not is_valid_email:
-                return False, f"Email validation failed: {email_error}"
-            
-            # Get DNS provider configuration
-            dns_config = self._get_dns_config()
-            if not dns_config:
-                return False, "DNS provider configuration not found"
-            
-            # Create config file and prepare certbot command
-            config_file, dns_plugin, dns_args = self._prepare_dns_config(dns_config)
-            
-            # Create local directories for certbot
-            letsencrypt_dir = self._get_cert_directory().parent / "letsencrypt"
-            config_dir = letsencrypt_dir / "config"
-            work_dir = letsencrypt_dir / "work"
-            logs_dir = letsencrypt_dir / "logs"
-            
-            # Create directories if they don't exist
-            config_dir.mkdir(parents=True, exist_ok=True)
-            work_dir.mkdir(parents=True, exist_ok=True)
-            logs_dir.mkdir(parents=True, exist_ok=True)
-            
-            # Prepare certbot command
-            cmd = [
-                'certbot', 'certonly',
-                '--config-dir', str(config_dir),
-                '--work-dir', str(work_dir),
-                '--logs-dir', str(logs_dir),
-                f'--dns-{dns_plugin}',
-                *dns_args,
-                '--email', self.email,
-                '--agree-tos',
-                '--non-interactive',
-                '--cert-name', self.domain,
-                '-d', self.domain,
-                '-d', f'*.{self.domain}'  # Include wildcard
-            ]
-            
-            _logger.info(f"Creating certificate for {self.domain} using {self.dns_provider_id.name}")
-            result = subprocess.run(cmd, capture_output=True, text=True)
-            
-            if result.returncode == 0:
-                # Copy certificates to our directory
-                src_dir = config_dir / "live" / self.domain
-                dest_dir = self._get_cert_directory() / self.domain
-                dest_dir.mkdir(exist_ok=True)
-                
-                # Copy certificate files
-                files_to_copy = ['cert.pem', 'chain.pem', 'fullchain.pem', 'privkey.pem']
-                for file_name in files_to_copy:
-                    src_file = src_dir / file_name
-                    dest_file = dest_dir / file_name
-                    if src_file.exists():
-                        with open(src_file, 'rb') as src, open(dest_file, 'wb') as dest:
-                            dest.write(src.read())
-                
-                _logger.info(f"Certificate created successfully for {self.domain}")
-                return True, "Certificate created successfully"
+            elif not record.valid_until:
+                record.state = 'invalid'
+            elif record.valid_until < fields.Datetime.now():
+                record.state = 'expired'
+            elif record.days_until_expiry <= 30:
+                record.state = 'expiring_soon'
             else:
-                error_msg = result.stderr or result.stdout
-                _logger.error(f"Certificate creation failed: {error_msg}")
-                return False, f"Certificate creation failed: {error_msg}"
-                
-        except Exception as e:
-            error_msg = str(e)
-            _logger.error(f"Exception during certificate creation: {error_msg}")
-            return False, f"Exception: {error_msg}"
+                record.state = 'valid'
 
-    def _get_dns_config(self):
-        """Get DNS configuration for the certificate"""
-        if self.dns_account_id:
-            return self.dns_account_id._get_config_dict()
-        elif self.dns_provider_id:
-            # Use default account for provider
-            default_account = self.dns_provider_id.account_ids.filtered('is_default')
-            if default_account:
-                return default_account[0]._get_config_dict()
-            elif self.dns_provider_id.account_ids:
-                return self.dns_provider_id.account_ids[0]._get_config_dict()
-        
-        return None
-
-    def _prepare_dns_config(self, dns_config):
-        """Prepare DNS configuration file and certbot arguments"""
-        provider_code = self.dns_provider_id.code
-        
-        # Create config directory
-        config_dir = self._get_cert_directory().parent / "letsencrypt" / "config"
-        config_dir.mkdir(parents=True, exist_ok=True)
-        
-        if provider_code == 'cloudflare':
-            config_file = config_dir / "cloudflare.ini"
-            with open(config_file, 'w') as f:
-                f.write(f"dns_cloudflare_api_token = {dns_config['api_token']}\n")
-            config_file.chmod(0o600)
-            return config_file, 'cloudflare', ['--dns-cloudflare-credentials', str(config_file)]
-            
-        elif provider_code == 'route53':
-            config_file = config_dir / "route53.ini"
-            with open(config_file, 'w') as f:
-                f.write(f"dns_route53_access_key_id = {dns_config['access_key_id']}\n")
-                f.write(f"dns_route53_secret_access_key = {dns_config['secret_access_key']}\n")
-            config_file.chmod(0o600)
-            return config_file, 'route53', ['--dns-route53-credentials', str(config_file)]
-            
-        # Add more providers as needed...
-        
-        raise UserError(f"DNS provider {provider_code} not implemented yet")
-
-    def _load_certificate_files(self):
-        """Load certificate files into binary fields"""
-        cert_dir = self._get_cert_directory() / self.domain
-        
-        file_mappings = {
-            'cert.pem': 'cert_file',
-            'privkey.pem': 'key_file',
-            'chain.pem': 'chain_file',
-            'fullchain.pem': 'fullchain_file'
-        }
-        
-        for file_name, field_name in file_mappings.items():
-            file_path = cert_dir / file_name
-            if file_path.exists():
-                with open(file_path, 'rb') as f:
-                    setattr(self, field_name, f.read())
-
-    def _add_history_entry(self, action, message):
-        """Add entry to certificate history"""
-        self.env['ssl.certificate.history'].create({
-            'certificate_id': self.id,
-            'action': action,
-            'message': message,
-            'timestamp': fields.Datetime.now()
+    def _reset_certificate_fields(self):
+        """Reset all certificate fields to default values"""
+        self.update({
+            'issuer': False,
+            'subject': False,
+            'serial_number': False,
+            'signature_algorithm': False,
+            'valid_from': False,
+            'valid_until': False,
+            'days_until_expiry': 0,
+            'san_domains': False,
+            'is_reachable': False,
+            'response_time': 0.0,
+            'certificate_data': False,
+            'error_message': False,
         })
 
-    def action_renew_certificate(self):
-        """Renew SSL certificate"""
+    def _update_certificate_fields(self, cert_info):
+        """Update certificate fields with fetched information"""
+        self.update({
+            'issuer': cert_info.get('issuer'),
+            'subject': cert_info.get('subject'),
+            'serial_number': cert_info.get('serial_number'),
+            'signature_algorithm': cert_info.get('signature_algorithm'),
+            'valid_from': cert_info.get('valid_from'),
+            'valid_until': cert_info.get('valid_until'),
+            'days_until_expiry': cert_info.get('days_until_expiry', 0),
+            'san_domains': cert_info.get('san_domains'),
+            'is_reachable': cert_info.get('is_reachable', False),
+            'response_time': cert_info.get('response_time', 0.0),
+            'certificate_data': json.dumps(cert_info, indent=2, default=str),
+            'error_message': cert_info.get('error_message'),
+            'last_check': fields.Datetime.now(),
+        })
+
+    def _fetch_certificate_info(self):
+        """Fetch certificate information using SSL connection"""
+        start_time = datetime.now()
+        
+        try:
+            # Create SSL context
+            context = ssl.create_default_context()
+            
+            # Connect to the domain
+            with socket.create_connection((self.domain, self.port), timeout=10) as sock:
+                with context.wrap_socket(sock, server_hostname=self.domain) as ssock:
+                    # Calculate response time
+                    response_time = (datetime.now() - start_time).total_seconds() * 1000
+                    
+                    # Get certificate
+                    cert_der = ssock.getpeercert(binary_form=True)
+                    cert_dict = ssock.getpeercert()
+                    
+                    # Parse certificate using cryptography library
+                    from cryptography import x509
+                    from cryptography.hazmat.backends import default_backend
+                    
+                    cert = x509.load_der_x509_certificate(cert_der, default_backend())
+                    
+                    # Convert timezone-aware datetimes to naive datetimes for Odoo
+                    valid_from_naive = cert.not_valid_before_utc.replace(tzinfo=None) if cert.not_valid_before_utc else None
+                    valid_until_naive = cert.not_valid_after_utc.replace(tzinfo=None) if cert.not_valid_after_utc else None
+                    
+                    # Extract certificate information
+                    cert_info = {
+                        'is_reachable': True,
+                        'response_time': response_time,
+                        'issuer': cert.issuer.rfc4514_string(),
+                        'subject': cert.subject.rfc4514_string(),
+                        'serial_number': str(cert.serial_number),
+                        'signature_algorithm': cert.signature_algorithm_oid._name,
+                        'valid_from': valid_from_naive,
+                        'valid_until': valid_until_naive,
+                        'version': cert.version.name,
+                    }
+                    
+                    # Calculate days until expiry
+                    if valid_until_naive:
+                        days_left = (valid_until_naive - datetime.now()).days
+                        cert_info['days_until_expiry'] = days_left
+                    
+                    # Extract Subject Alternative Names
+                    try:
+                        san_extension = cert.extensions.get_extension_for_oid(x509.oid.ExtensionOID.SUBJECT_ALTERNATIVE_NAME)
+                        san_names = [name.value for name in san_extension.value]
+                        cert_info['san_domains'] = '\n'.join(san_names)
+                        cert_info['san_list'] = san_names
+                    except x509.ExtensionNotFound:
+                        cert_info['san_domains'] = ''
+                        cert_info['san_list'] = []
+                    
+                    # Extract additional extensions
+                    cert_info['extensions'] = {}
+                    for extension in cert.extensions:
+                        try:
+                            cert_info['extensions'][extension.oid._name] = str(extension.value)
+                        except:
+                            cert_info['extensions'][extension.oid._name] = 'Unable to parse'
+                    
+                    # Add raw certificate data
+                    cert_info['raw_cert'] = cert_dict
+                    
+                    return cert_info
+                    
+        except socket.timeout:
+            return {
+                'is_reachable': False,
+                'error_message': 'Connection timeout',
+                'response_time': (datetime.now() - start_time).total_seconds() * 1000
+            }
+        except socket.gaierror as e:
+            return {
+                'is_reachable': False,
+                'error_message': f'DNS resolution failed: {str(e)}',
+                'response_time': (datetime.now() - start_time).total_seconds() * 1000
+            }
+        except ssl.SSLError as e:
+            return {
+                'is_reachable': True,
+                'error_message': f'SSL Error: {str(e)}',
+                'response_time': (datetime.now() - start_time).total_seconds() * 1000
+            }
+        except Exception as e:
+            return {
+                'is_reachable': False,
+                'error_message': f'Unexpected error: {str(e)}',
+                'response_time': (datetime.now() - start_time).total_seconds() * 1000
+            }
+
+    def action_refresh_certificate(self):
+        """Manually refresh certificate information"""
         self.ensure_one()
         
-        if self.state not in ['active', 'expired']:
-            raise UserError(_("Certificate can only be renewed when active or expired"))
-        
-        self.state = 'renewing'
-        
-        # Renew certificate in background
-        threading.Thread(target=self._renew_certificate_async).start()
+        # Trigger recomputation
+        self._compute_certificate_info()
         
         return {
             'type': 'ir.actions.client',
             'tag': 'display_notification',
             'params': {
-                'title': _('Certificate Renewal Started'),
-                'message': _('Certificate renewal for %s has been started in the background.') % self.domain,
+                'title': _('Certificate Refreshed'),
+                'message': _('Certificate information for %s has been updated.') % self.domain,
                 'type': 'success',
                 'sticky': False,
             }
         }
 
-    def _renew_certificate_async(self):
-        """Renew certificate asynchronously"""
-        try:
-            with self.env.registry.cursor() as new_cr:
-                new_env = api.Environment(new_cr, self.env.uid, self.env.context)
-                record = new_env['ssl.certificate'].browse(self.id)
-                
-                success, message = record._create_certificate()  # Same process as creation
-                
-                if success:
-                    record.state = 'active'
-                    record.last_renewal_date = fields.Datetime.now()
-                    record.renewal_count += 1
-                    record._load_certificate_files()
-                    record._add_history_entry('renewed', 'Certificate renewed successfully')
-                else:
-                    record.state = 'error'
-                    record.creation_log = message
-                    record._add_history_entry('error', f'Certificate renewal failed: {message}')
-                
-                new_cr.commit()
-                
-        except Exception as e:
-            _logger.error(f"Error in certificate renewal: {e}")
-            with self.env.registry.cursor() as new_cr:
-                new_env = api.Environment(new_cr, self.env.uid, self.env.context)
-                record = new_env['ssl.certificate'].browse(self.id)
-                record.state = 'error'
-                record.creation_log = str(e)
-                record._add_history_entry('error', f'Certificate renewal failed: {str(e)}')
-                new_cr.commit()
-
-    def action_download_certificate(self):
-        """Download certificate files as ZIP"""
+    def action_check_http_redirect(self):
+        """Check if HTTP redirects to HTTPS"""
         self.ensure_one()
         
-        if not self.exists:
-            raise UserError(_("No certificate files found"))
-        
-        # Create temporary ZIP file
-        with tempfile.NamedTemporaryFile(delete=False, suffix='.zip') as tmp_file:
-            with zipfile.ZipFile(tmp_file.name, 'w') as zip_file:
-                if self.cert_file:
-                    zip_file.writestr('cert.pem', self.cert_file)
-                if self.key_file:
-                    zip_file.writestr('privkey.pem', self.key_file)
-                if self.chain_file:
-                    zip_file.writestr('chain.pem', self.chain_file)
-                if self.fullchain_file:
-                    zip_file.writestr('fullchain.pem', self.fullchain_file)
+        try:
+            # Check HTTP redirect
+            http_url = f"http://{self.domain}"
+            response = requests.get(http_url, allow_redirects=False, timeout=10)
             
-            # Read the file and return as attachment
-            with open(tmp_file.name, 'rb') as f:
-                zip_data = f.read()
-            
-            # Clean up temp file
-            os.unlink(tmp_file.name)
-            
-            attachment = self.env['ir.attachment'].create({
-                'name': f'{self.domain}-certificates.zip',
-                'type': 'binary',
-                'datas': zip_data,
-                'mimetype': 'application/zip'
-            })
-            
-            return {
-                'type': 'ir.actions.act_url',
-                'url': f'/web/content/{attachment.id}?download=true',
-                'target': 'self',
+            redirect_info = {
+                'status_code': response.status_code,
+                'redirects_to_https': False,
+                'location': response.headers.get('Location', ''),
             }
-
-    def action_check_deployment(self):
-        """Check certificate deployment status"""
-        self.ensure_one()
-        
-        try:
-            status = self._check_ssl_certificate()
-            self.deployment_status = json.dumps(status)
-            self.last_deployment_check = fields.Datetime.now()
             
-            if status.get('deployed') and status.get('certificate_match'):
-                message = _('Certificate is properly deployed and matches')
+            if response.status_code in [301, 302, 303, 307, 308]:
+                location = response.headers.get('Location', '')
+                if location.startswith('https://'):
+                    redirect_info['redirects_to_https'] = True
+            
+            message = _('HTTP Status: %s') % response.status_code
+            if redirect_info['redirects_to_https']:
+                message += _('\nRedirects to HTTPS: Yes')
                 notification_type = 'success'
-            elif status.get('deployed'):
-                message = _('Certificate is deployed but may not match')
-                notification_type = 'warning'
             else:
-                message = _('Certificate is not deployed or unreachable')
-                notification_type = 'danger'
-            
+                message += _('\nRedirects to HTTPS: No')
+                notification_type = 'warning'
+                
             return {
                 'type': 'ir.actions.client',
                 'tag': 'display_notification',
                 'params': {
-                    'title': _('Deployment Status'),
+                    'title': _('HTTP Redirect Check'),
                     'message': message,
                     'type': notification_type,
                     'sticky': False,
@@ -599,97 +339,43 @@ class SSLCertificate(models.Model):
             }
             
         except Exception as e:
-            _logger.error(f"Error checking deployment status: {e}")
-            raise UserError(_("Failed to check deployment status: %s") % str(e))
-
-    def _check_ssl_certificate(self, port=443, timeout=10):
-        """Check SSL certificate for the domain"""
-        import ssl
-        import socket
-        from cryptography import x509
-        from cryptography.hazmat.backends import default_backend
-        
-        try:
-            # Create SSL context
-            context = ssl.create_default_context()
-            
-            # Connect to the domain
-            with socket.create_connection((self.domain, port), timeout=timeout) as sock:
-                with context.wrap_socket(sock, server_hostname=self.domain) as ssock:
-                    # Get certificate info
-                    cert_der = ssock.getpeercert(binary_form=True)
-                    cert = x509.load_der_x509_certificate(cert_der, default_backend())
-                    
-                    # Check if certificate is valid for this domain
-                    san_extension = None
-                    try:
-                        san_extension = cert.extensions.get_extension_for_oid(x509.oid.ExtensionOID.SUBJECT_ALTERNATIVE_NAME)
-                        san_names = [name.value for name in san_extension.value]
-                    except:
-                        san_names = []
-                    
-                    # Get subject common name
-                    subject_cn = None
-                    for attribute in cert.subject:
-                        if attribute.oid == x509.oid.NameOID.COMMON_NAME:
-                            subject_cn = attribute.value
-                            break
-                    
-                    # Check if domain matches certificate
-                    certificate_domains = []
-                    if subject_cn:
-                        certificate_domains.append(subject_cn)
-                    certificate_domains.extend(san_names)
-                    
-                    domain_match = any(
-                        self.domain == cert_domain or 
-                        (cert_domain.startswith('*.') and self.domain.endswith(cert_domain[2:]))
-                        for cert_domain in certificate_domains
-                    )
-                    
-                    return {
-                        'deployed': True,
-                        'reachable': True,
-                        'certificate_match': domain_match,
-                        'certificate_domains': certificate_domains,
-                        'issuer': cert.issuer.rfc4514_string(),
-                        'expires_at': cert.not_valid_after_utc.isoformat(),
-                        'method': 'ssl-direct',
-                        'timestamp': datetime.now().isoformat()
-                    }
-                    
-        except socket.timeout:
             return {
-                'deployed': False,
-                'reachable': False,
-                'certificate_match': False,
-                'error': 'timeout',
-                'method': 'ssl-direct',
-                'timestamp': datetime.now().isoformat()
-            }
-        except Exception as e:
-            return {
-                'deployed': False,
-                'reachable': False,
-                'certificate_match': False,
-                'error': str(e),
-                'method': 'ssl-direct',
-                'timestamp': datetime.now().isoformat()
+                'type': 'ir.actions.client',
+                'tag': 'display_notification',
+                'params': {
+                    'title': _('HTTP Check Failed'),
+                    'message': _('Failed to check HTTP redirect: %s') % str(e),
+                    'type': 'danger',
+                    'sticky': False,
+                }
             }
 
     @api.model
-    def cron_auto_renew_certificates(self):
-        """Cron job to automatically renew certificates"""
-        certificates = self.search([
-            ('auto_renew', '=', True),
-            ('state', '=', 'active'),
-            ('needs_renewal', '=', True)
-        ])
+    def cron_refresh_certificates(self):
+        """Cron job to refresh all certificate information"""
+        certificates = self.search([])
         
         for cert in certificates:
             try:
-                cert.action_renew_certificate()
-                _logger.info(f"Auto-renewal started for certificate: {cert.domain}")
+                cert._compute_certificate_info()
+                _logger.info(f"Refreshed certificate info for: {cert.domain}")
             except Exception as e:
-                _logger.error(f"Auto-renewal failed for certificate {cert.domain}: {e}")
-                cert._add_history_entry('error', f'Auto-renewal failed: {str(e)}')
+                _logger.error(f"Failed to refresh certificate for {cert.domain}: {e}")
+
+    @api.constrains('domain')
+    def _check_domain_format(self):
+        """Validate domain format"""
+        import re
+        for record in self:
+            if record.domain:
+                # Basic domain validation
+                domain_pattern = r'^[a-zA-Z0-9]([a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(\.[a-zA-Z0-9]([a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$'
+                if not re.match(domain_pattern, record.domain.strip().lower()):
+                    raise ValidationError(_("Invalid domain format"))
+
+    @api.constrains('port')
+    def _check_port_range(self):
+        """Validate port range"""
+        for record in self:
+            if record.port and (record.port < 1 or record.port > 65535):
+                raise ValidationError(_("Port must be between 1 and 65535"))

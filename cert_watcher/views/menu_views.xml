@@ -4,8 +4,8 @@
         
         <!-- Main Menu -->
         <menuitem id="menu_ssl_certificate_main"
-                  name="SSL Certificates"
-                  web_icon="ssl_certificate_manager,static/description/icon.png"
+                  name="Certificate Monitor"
+                  web_icon="cert_watcher,static/description/icon.png"
                   sequence="90"/>
         
         <!-- SSL Certificates Menu -->
@@ -14,26 +14,6 @@
                   parent="menu_ssl_certificate_main"
                   action="action_ssl_certificate"
                   sequence="10"/>
-        
-        <!-- Configuration Menu -->
-        <menuitem id="menu_ssl_certificate_config"
-                  name="Configuration"
-                  parent="menu_ssl_certificate_main"
-                  sequence="20"/>
-        
-        <!-- DNS Providers Menu -->
-        <menuitem id="menu_dns_provider"
-                  name="DNS Providers"
-                  parent="menu_ssl_certificate_config"
-                  action="action_dns_provider"
-                  sequence="10"/>
-        
-        <!-- DNS Accounts Menu -->
-        <menuitem id="menu_dns_account"
-                  name="DNS Accounts"
-                  parent="menu_ssl_certificate_config"
-                  action="action_dns_account"
-                  sequence="20"/>
         
     </data>
 </odoo>

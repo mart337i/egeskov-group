@@ -1,23 +1,95 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
     <data>
-        <!-- SSL Certificate list View -->
+        <!-- SSL Certificate Kanban View -->
+        <record id="view_ssl_certificate_kanban" model="ir.ui.view">
+            <field name="name">ssl.certificate.kanban</field>
+            <field name="model">ssl.certificate</field>
+            <field name="arch" type="xml">
+                <kanban default_group_by="state" class="o_kanban_small_column">
+                    <field name="domain"/>
+                    <field name="state"/>
+                    <field name="days_until_expiry"/>
+                    <field name="valid_until"/>
+                    <field name="issuer"/>
+                    <field name="is_reachable"/>
+                    <field name="last_check"/>
+                    <field name="response_time"/>
+                    <templates>
+                        <t t-name="kanban-box">
+                            <div class="oe_kanban_card oe_kanban_global_click">
+                                <div class="o_kanban_card_header">
+                                    <div class="o_kanban_card_header_title">
+                                        <div class="o_field_char o_text_overflow" t-att-title="record.domain.value">
+                                            <strong><t t-esc="record.domain.value"/></strong>
+                                        </div>
+                                    </div>
+                                    <div class="o_kanban_card_header_right">
+                                        <span class="badge" t-att-class="record.state.value === 'valid' ? 'badge-success' : 
+                                                                     record.state.value === 'expiring_soon' ? 'badge-warning' : 
+                                                                     record.state.value === 'expired' ? 'badge-danger' : 
+                                                                     record.state.value === 'unreachable' ? 'badge-secondary' : 'badge-dark'">
+                                            <t t-esc="record.state.value"/>
+                                        </span>
+                                    </div>
+                                </div>
+                                <div class="o_kanban_card_content">
+                                    <div class="row">
+                                        <div class="col-12">
+                                            <t t-if="record.valid_until.value">
+                                                <i class="fa fa-calendar"/> Expires: <t t-esc="record.valid_until.value"/>
+                                                <br/>
+                                                <i class="fa fa-clock-o"/> Days left: <t t-esc="record.days_until_expiry.value"/>
+                                            </t>
+                                            <t t-if="record.issuer.value">
+                                                <br/>
+                                                <i class="fa fa-certificate"/> <t t-esc="record.issuer.value"/>
+                                            </t>
+                                            <t t-if="record.response_time.value">
+                                                <br/>
+                                                <i class="fa fa-tachometer"/> <t t-esc="record.response_time.value"/>ms
+                                            </t>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="o_kanban_card_footer">
+                                    <div class="o_kanban_card_footer_left">
+                                        <t t-if="record.last_check.value">
+                                            <small class="text-muted">
+                                                Last check: <t t-esc="record.last_check.value"/>
+                                            </small>
+                                        </t>
+                                    </div>
+                                    <div class="o_kanban_card_footer_right">
+                                        <button name="action_refresh_certificate" type="object" class="btn btn-sm btn-secondary">
+                                            <i class="fa fa-refresh"/> Refresh
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </t>
+                    </templates>
+                </kanban>
+            </field>
+        </record>
+
+        <!-- SSL Certificate List View -->
         <record id="view_ssl_certificate_list" model="ir.ui.view">
             <field name="name">ssl.certificate.list</field>
             <field name="model">ssl.certificate</field>
             <field name="arch" type="xml">
-                <list decoration-success="state == 'active'" 
-                      decoration-warning="needs_renewal == True"
-                      decoration-danger="state == 'error'">
+                <list decoration-success="state == 'valid'" 
+                      decoration-warning="state == 'expiring_soon'"
+                      decoration-danger="state in ['expired', 'error']"
+                      decoration-muted="state == 'unreachable'">
                     <field name="domain"/>
-                    <field name="dns_provider_id"/>
                     <field name="state" widget="badge"/>
-                    <field name="exists" widget="boolean"/>
-                    <field name="expiry_date"/>
+                    <field name="is_reachable" widget="boolean"/>
+                    <field name="valid_until"/>
                     <field name="days_until_expiry"/>
-                    <field name="needs_renewal" widget="boolean"/>
-                    <field name="auto_renew" widget="boolean"/>
-                    <field name="last_renewal_date"/>
+                    <field name="issuer"/>
+                    <field name="response_time"/>
+                    <field name="last_check"/>
                 </list>
             </field>
         </record>
@@ -29,83 +101,49 @@
             <field name="arch" type="xml">
                 <form>
                     <header>
-                        <button name="action_create_certificate" 
-                                string="Create Certificate" 
+                        <button name="action_refresh_certificate" 
+                                string="Refresh Certificate" 
                                 type="object" 
-                                class="oe_highlight"
-                                invisible="state != 'draft'"/>
-                        <button name="action_renew_certificate" 
-                                string="Renew Certificate" 
-                                type="object" 
-                                class="oe_highlight"
-                                invisible="state not in ['active', 'expired']"/>
-                        <button name="action_check_deployment" 
-                                string="Check Deployment" 
-                                type="object"
-                                invisible="state != 'active'"/>
-                        <button name="action_download_certificate" 
-                                string="Download Certificate" 
-                                type="object"
-                                invisible="exists == False"/>
-                        <field name="state" widget="statusbar" statusbar_visible="draft,creating,active,expired"/>
+                                class="oe_highlight"/>
+                        <button name="action_check_http_redirect" 
+                                string="Check HTTP Redirect" 
+                                type="object"/>
+                        <field name="state" widget="statusbar"/>
                     </header>
                     <sheet>
-                        <!-- <div class="oe_button_box" name="button_box">
-                            <button class="oe_stat_button" type="object" name="action_view_history" icon="fa-history">
-                                <field string="History" name="renewal_count" widget="statinfo"/>
-                            </button>
-                        </div> -->
-                        
                         <group>
                             <group name="basic_info">
-                                <field name="domain" readonly="state != 'draft'"/>
-                                <field name="email" readonly="state != 'draft'"/>
-                                <field name="auto_renew"/>
+                                <field name="domain"/>
+                                <field name="port"/>
+                                <field name="is_reachable" widget="boolean"/>
+                                <field name="response_time"/>
                             </group>
-                            <group name="dns_config">
-                                <field name="dns_provider_id" readonly="state != 'draft'"/>
-                                <field name="dns_account_id" readonly="state != 'draft'"/>
+                            <group name="status_info">
+                                <field name="last_check"/>
+                                <field name="error_message" invisible="not error_message"/>
                             </group>
                         </group>
                         
-                        <group string="Certificate Status">
+                        <group string="Certificate Information" invisible="not is_reachable">
                             <group>
-                                <field name="exists" widget="boolean"/>
-                                <field name="expiry_date"/>
-                                <field name="days_until_expiry"/>
-                                <field name="needs_renewal" widget="boolean"/>
+                                <field name="issuer"/>
+                                <field name="subject"/>
+                                <field name="serial_number"/>
+                                <field name="signature_algorithm"/>
                             </group>
                             <group>
-                                <field name="last_renewal_date"/>
-                                <field name="renewal_count"/>
-                                <field name="last_deployment_check"/>
+                                <field name="valid_from"/>
+                                <field name="valid_until"/>
+                                <field name="days_until_expiry"/>
                             </group>
                         </group>
                         
                         <notebook>
-                            <page string="Certificate Files" invisible="exists == False">
-                                <group>
-                                    <field name="cert_file" filename="cert.pem"/>
-                                    <field name="key_file" filename="privkey.pem"/>
-                                    <field name="chain_file" filename="chain.pem"/>
-                                    <field name="fullchain_file" filename="fullchain.pem"/>
-                                </group>
+                            <page string="Subject Alternative Names" invisible="not san_domains">
+                                <field name="san_domains" widget="text" nolabel="1"/>
                             </page>
-                            <page string="Deployment Status">
-                                <field name="deployment_status" widget="text"/>
-                            </page>
-                            <page string="Logs">
-                                <field name="creation_log" widget="text"/>
-                            </page>
-                            <page string="History">
-                                <field name="history_ids" readonly="1">
-                                    <list>
-                                        <field name="timestamp"/>
-                                        <field name="action"/>
-                                        <field name="message"/>
-                                        <field name="user_id"/>
-                                    </list>
-                                </field>
+                            <page string="Raw Certificate Data" invisible="not certificate_data">
+                                <field name="certificate_data" widget="text" nolabel="1"/>
                             </page>
                         </notebook>
                     </sheet>
@@ -120,16 +158,17 @@
             <field name="arch" type="xml">
                 <search>
                     <field name="domain"/>
-                    <field name="dns_provider_id"/>
+                    <field name="issuer"/>
                     <field name="state"/>
-                    <filter string="Active" name="active" domain="[('state', '=', 'active')]"/>
-                    <filter string="Needs Renewal" name="needs_renewal" domain="[('needs_renewal', '=', True)]"/>
-                    <filter string="Auto Renew" name="auto_renew" domain="[('auto_renew', '=', True)]"/>
+                    <filter string="Valid" name="valid" domain="[('state', '=', 'valid')]"/>
+                    <filter string="Expiring Soon" name="expiring_soon" domain="[('state', '=', 'expiring_soon')]"/>
+                    <filter string="Expired" name="expired" domain="[('state', '=', 'expired')]"/>
+                    <filter string="Unreachable" name="unreachable" domain="[('state', '=', 'unreachable')]"/>
                     <separator/>
-                    <filter string="Error" name="error" domain="[('state', '=', 'error')]"/>
+                    <filter string="Reachable" name="reachable" domain="[('is_reachable', '=', True)]"/>
                     <group expand="0" string="Group By">
-                        <filter string="DNS Provider" name="group_dns_provider" context="{'group_by': 'dns_provider_id'}"/>
-                        <filter string="State" name="group_state" context="{'group_by': 'state'}"/>
+                        <filter string="Status" name="group_state" context="{'group_by': 'state'}"/>
+                        <filter string="Issuer" name="group_issuer" context="{'group_by': 'issuer'}"/>
                     </group>
                 </search>
             </field>
@@ -139,14 +178,14 @@
         <record id="action_ssl_certificate" model="ir.actions.act_window">
             <field name="name">SSL Certificates</field>
             <field name="res_model">ssl.certificate</field>
-            <field name="view_mode">list,form</field>
+            <field name="view_mode">kanban,list,form</field>
             <field name="help" type="html">
                 <p class="o_view_nocontent_smiling_face">
-                    Create your first SSL certificate!
+                    Add your first domain to monitor!
                 </p>
                 <p>
-                    SSL certificates are automatically managed using Let's Encrypt
-                    and your configured DNS providers.
+                    Monitor SSL certificates for your domains without storing certificates locally.
+                    Just add a domain and the system will check its SSL certificate status via HTTP.
                 </p>
             </field>
         </record>

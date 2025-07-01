@@ -1,65 +1,53 @@
 {
-    'name': 'SSL Certificate Manager',
+    'name': 'Certificate Monitor',
     'version': '18.0.1.0.0',
     'category': 'Security',
-    'summary': 'Manage SSL certificates with Let\'s Encrypt and multiple DNS providers',
+    'summary': 'Monitor SSL certificates via HTTP requests without local storage',
     'description': """
     
-SSL Certificate Manager
-=======================
+Certificate Monitor
+===================
 
-This module provides comprehensive SSL certificate management capabilities:
+This module provides SSL certificate monitoring capabilities via HTTP requests:
 
 Features:
 ---------
-* Create SSL certificates using Let's Encrypt
-* Support for multiple DNS providers (Cloudflare, Route53, Azure, Google Cloud, etc.)
-* Multi-account support for DNS providers
-* Automatic certificate renewal
-* Certificate deployment status monitoring
-* Certificate download functionality
-* Web interface for easy management
+* Monitor SSL certificates for any domain via HTTP/HTTPS
+* Real-time certificate information retrieval
+* Certificate expiry tracking and alerts
+* Kanban view for easy domain management
+* Detailed certificate information display
+* HTTP to HTTPS redirect checking
+* No local certificate storage required
+* Automatic certificate status updates
 
-Supported DNS Providers:
+Certificate Information:
 ------------------------
-* Cloudflare
-* AWS Route53
-* Azure DNS
-* Google Cloud DNS
-* PowerDNS
-* DigitalOcean
-* Linode
-* Gandi
-* OVH
-* Namecheap
-* And many more...
+* Certificate validity dates
+* Issuer information
+* Subject Alternative Names (SAN)
+* Serial numbers and signature algorithms
+* Response time monitoring
+* Reachability status
 
 Requirements:
 -------------
-* certbot
-* Required certbot DNS plugins for your providers
+* Python requests library
 * Python cryptography library
+* Network access to monitored domains
     """,
-    'author': 'SSL Certificate Manager',
-    'website': 'https://github.com/ssl-cert-manager',
+    'author': 'Certificate Monitor',
+    'website': 'https://github.com/cert-monitor',
     'license': 'LGPL-3',
     'depends': ['base', 'web'],
     'data': [
         'security/ir.model.access.csv',
-        'security/security.xml',
         'views/ssl_certificate_views.xml',
-        'views/dns_provider_views.xml',
-        'views/dns_account_views.xml',
         'views/menu_views.xml',
-        'data/dns_provider_data.xml',
         'data/ir_cron_data.xml',
     ],
-    'assets': {
-        'web.assets_backend': [
-            'cert_watcher/static/src/css/ssl_cert.css',
-            'cert_watcher/static/src/js/ssl_cert_widget.js',
-            'cert_watcher/static/src/xml/ssl_cert_widget.xml',
-        ],
+    'external_dependencies': {
+        'python': ['requests', 'cryptography'],
     },
     'installable': True,
     'auto_install': False,

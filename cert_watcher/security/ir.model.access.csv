@@ -1,5 +1,2 @@
 id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
 access_ssl_certificate,ssl.certificate,model_ssl_certificate,base.group_user,1,1,1,1
-access_dns_provider,dns.provider,model_dns_provider,base.group_user,1,1,1,1
-access_dns_account,dns.account,model_dns_account,base.group_user,1,1,1,1
-access_ssl_certificate_history,ssl.certificate.history,model_ssl_certificate_history,base.group_user,1,0,0,0

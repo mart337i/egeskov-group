@@ -1,0 +1,87 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data noupdate="1">
+        
+        <!-- Cloudflare -->
+        <record id="dns_provider_cloudflare" model="dns.provider">
+            <field name="name">Cloudflare</field>
+            <field name="code">cloudflare</field>
+            <field name="description">Cloudflare DNS provider using API tokens</field>
+            <field name="required_fields">["api_token"]</field>
+        </record>
+        
+        <!-- AWS Route53 -->
+        <record id="dns_provider_route53" model="dns.provider">
+            <field name="name">AWS Route53</field>
+            <field name="code">route53</field>
+            <field name="description">Amazon Web Services Route53 DNS provider</field>
+            <field name="required_fields">["access_key_id", "secret_access_key"]</field>
+            <field name="optional_fields">["region"]</field>
+        </record>
+        
+        <!-- Azure DNS -->
+        <record id="dns_provider_azure" model="dns.provider">
+            <field name="name">Azure DNS</field>
+            <field name="code">azure</field>
+            <field name="description">Microsoft Azure DNS provider</field>
+            <field name="required_fields">["subscription_id", "resource_group", "tenant_id", "client_id", "client_secret"]</field>
+        </record>
+        
+        <!-- Google Cloud DNS -->
+        <record id="dns_provider_google" model="dns.provider">
+            <field name="name">Google Cloud DNS</field>
+            <field name="code">google</field>
+            <field name="description">Google Cloud Platform DNS provider</field>
+            <field name="required_fields">["project_id", "service_account_key"]</field>
+        </record>
+        
+        <!-- PowerDNS -->
+        <record id="dns_provider_powerdns" model="dns.provider">
+            <field name="name">PowerDNS</field>
+            <field name="code">powerdns</field>
+            <field name="description">PowerDNS API provider</field>
+            <field name="required_fields">["api_url", "api_key"]</field>
+        </record>
+        
+        <!-- DigitalOcean -->
+        <record id="dns_provider_digitalocean" model="dns.provider">
+            <field name="name">DigitalOcean</field>
+            <field name="code">digitalocean</field>
+            <field name="description">DigitalOcean DNS provider</field>
+            <field name="required_fields">["api_token"]</field>
+        </record>
+        
+        <!-- Linode -->
+        <record id="dns_provider_linode" model="dns.provider">
+            <field name="name">Linode</field>
+            <field name="code">linode</field>
+            <field name="description">Linode DNS provider</field>
+            <field name="required_fields">["api_key"]</field>
+        </record>
+        
+        <!-- Gandi -->
+        <record id="dns_provider_gandi" model="dns.provider">
+            <field name="name">Gandi</field>
+            <field name="code">gandi</field>
+            <field name="description">Gandi DNS provider</field>
+            <field name="required_fields">["api_token"]</field>
+        </record>
+        
+        <!-- OVH -->
+        <record id="dns_provider_ovh" model="dns.provider">
+            <field name="name">OVH</field>
+            <field name="code">ovh</field>
+            <field name="description">OVH DNS provider</field>
+            <field name="required_fields">["endpoint", "application_key", "application_secret", "consumer_key"]</field>
+        </record>
+        
+        <!-- Namecheap -->
+        <record id="dns_provider_namecheap" model="dns.provider">
+            <field name="name">Namecheap</field>
+            <field name="code">namecheap</field>
+            <field name="description">Namecheap DNS provider</field>
+            <field name="required_fields">["username", "api_key"]</field>
+        </record>
+        
+    </data>
+</odoo>

@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+        
+        <!-- DNS Provider list View -->
+        <record id="view_dns_provider_list" model="ir.ui.view">
+            <field name="name">dns.provider.list</field>
+            <field name="model">dns.provider</field>
+            <field name="arch" type="xml">
+                <list decoration-muted="active == False">
+                    <field name="name"/>
+                    <field name="code"/>
+                    <field name="account_count"/>
+                    <field name="certificate_count"/>
+                    <field name="active" widget="boolean"/>
+                </list>
+            </field>
+        </record>
+        
+        <!-- DNS Provider Form View -->
+        <record id="view_dns_provider_form" model="ir.ui.view">
+            <field name="name">dns.provider.form</field>
+            <field name="model">dns.provider</field>
+            <field name="arch" type="xml">
+                <form>
+                    <sheet>
+                        <div class="oe_button_box" name="button_box">
+                            <!-- <button class="oe_stat_button" type="object" name="action_view_accounts" icon="fa-user">
+                                <field string="Accounts" name="account_count" widget="statinfo"/>
+                            </button> -->
+                            <button class="oe_stat_button" type="object" name="action_view_certificates" icon="fa-certificate">
+                                <field string="Certificates" name="certificate_count" widget="statinfo"/>
+                            </button>
+                        </div>
+                        
+                        <widget name="web_ribbon" title="Archived" bg_color="bg-danger" invisible="active == True"/>
+                        
+                        <group>
+                            <group>
+                                <field name="name"/>
+                                <field name="code"/>
+                                <field name="active"/>
+                            </group>
+                            <group>
+                                <field name="account_count"/>
+                                <field name="certificate_count"/>
+                            </group>
+                        </group>
+                        
+                        <group string="Description">
+                            <field name="description" nolabel="1"/>
+                        </group>
+                        
+                        <notebook>
+                            <page string="Configuration">
+                                <group>
+                                    <field name="required_fields"/>
+                                    <field name="optional_fields"/>
+                                </group>
+                            </page>
+                            <page string="Accounts">
+                                <field name="account_ids">
+                                    <list>
+                                        <field name="name"/>
+                                        <field name="is_default" widget="boolean"/>
+                                        <field name="certificate_count"/>
+                                        <field name="active" widget="boolean"/>
+                                    </list>
+                                </field>
+                            </page>
+                        </notebook>
+                    </sheet>
+                </form>
+            </field>
+        </record>
+        
+        <!-- DNS Provider Action -->
+        <record id="action_dns_provider" model="ir.actions.act_window">
+            <field name="name">DNS Providers</field>
+            <field name="res_model">dns.provider</field>
+            <field name="view_mode">list,form</field>
+        </record>
+        
+    </data>
+</odoo>

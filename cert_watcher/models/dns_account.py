@@ -234,3 +234,15 @@ class DNSAccount(models.Model):
                 'sticky': False,
             }
         }
+
+    def action_view_certificates(self):
+        """Open certificates using this DNS account"""
+        self.ensure_one()
+        return {
+            'type': 'ir.actions.act_window',
+            'name': _('Certificates'),
+            'res_model': 'ssl.certificate',
+            'view_mode': 'list,form',
+            'domain': [('dns_account_id', '=', self.id)],
+            'context': {'default_dns_account_id': self.id},
+        }

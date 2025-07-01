@@ -93,7 +93,7 @@
                                 </group>
                             </page>
                             
-                            <page string="Generic" invisible="provider_id.code in ['cloudflare', 'route53', 'azure', 'google', 'powerdns'])]">
+                            <page string="Generic" invisible="provider_id.code in ['cloudflare', 'route53', 'azure', 'google', 'powerdns']">
                                 <group>
                                     <field name="username"/>
                                     <field name="password" password="True"/>

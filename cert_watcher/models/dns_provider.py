@@ -82,3 +82,15 @@ class DNSProvider(models.Model):
         elif self.account_ids:
             return self.account_ids[0]
         return None
+
+    def action_view_certificates(self):
+        """Open certificates using this DNS provider"""
+        self.ensure_one()
+        return {
+            'type': 'ir.actions.act_window',
+            'name': _('Certificates'),
+            'res_model': 'ssl.certificate',
+            'view_mode': 'list,form',
+            'domain': [('dns_provider_id', '=', self.id)],
+            'context': {'default_dns_provider_id': self.id},
+        }

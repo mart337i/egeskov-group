@@ -33,16 +33,16 @@
                                 string="Create Certificate" 
                                 type="object" 
                                 class="oe_highlight"
-                                invisible="state in 'draft'"/>
+                                invisible="state != 'draft'"/>
                         <button name="action_renew_certificate" 
                                 string="Renew Certificate" 
                                 type="object" 
                                 class="oe_highlight"
-                                invisible="state in ['active,expired']"/>
+                                invisible="state not in ['active', 'expired']"/>
                         <button name="action_check_deployment" 
                                 string="Check Deployment" 
                                 type="object"
-                                invisible="state in 'active'"/>
+                                invisible="state != 'active'"/>
                         <button name="action_download_certificate" 
                                 string="Download Certificate" 
                                 type="object"

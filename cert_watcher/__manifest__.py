@@ -47,19 +47,20 @@ Requirements:
     'data': [
         'security/ir.model.access.csv',
         'security/security.xml',
-        # 'views/ssl_certificate_views.xml',
-        # 'views/dns_provider_views.xml',
-        # 'views/dns_account_views.xml',
-        # 'views/menu_views.xml',
+        'views/ssl_certificate_views.xml',
+        'views/dns_provider_views.xml',
+        'views/dns_account_views.xml',
+        'views/menu_views.xml',
         'data/dns_provider_data.xml',
         'data/ir_cron_data.xml',
     ],
-    # 'assets': {
-    #     'web.assets_backend': [
-    #         'ssl_certificate_manager/static/src/css/ssl_cert.css',
-    #         'ssl_certificate_manager/static/src/js/ssl_cert_widget.js',
-    #     ],
-    # },
+    'assets': {
+        'web.assets_backend': [
+            'cert_watcher/static/src/css/ssl_cert.css',
+            'cert_watcher/static/src/js/ssl_cert_widget.js',
+            'cert_watcher/static/src/xml/ssl_cert_widget.xml',
+        ],
+    },
     'installable': True,
     'auto_install': False,
     'application': True,

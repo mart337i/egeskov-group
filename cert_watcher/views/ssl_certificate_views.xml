@@ -15,6 +15,8 @@
                     <field name="is_reachable"/>
                     <field name="last_check"/>
                     <field name="response_time"/>
+                    <field name="dns_provider"/>
+                    <field name="domain_registrar"/>
                     <templates>
                         <t t-name="kanban-box">
                             <div class="oe_kanban_card oe_kanban_global_click">
@@ -36,6 +38,14 @@
                                 <div class="o_kanban_card_content">
                                     <div class="row">
                                         <div class="col-12">
+                                            <t t-if="record.dns_provider.value">
+                                                <i class="fa fa-server"/> DNS: <t t-esc="record.dns_provider.value"/>
+                                                <br/>
+                                            </t>
+                                            <t t-if="record.domain_registrar.value">
+                                                <i class="fa fa-globe"/> Registrar: <t t-esc="record.domain_registrar.value"/>
+                                                <br/>
+                                            </t>
                                             <t t-if="record.valid_until.value">
                                                 <i class="fa fa-calendar"/> Expires: <t t-esc="record.valid_until.value"/>
                                                 <br/>
@@ -83,6 +93,8 @@
                       decoration-danger="state in ['expired', 'error']"
                       decoration-muted="state == 'unreachable'">
                     <field name="domain"/>
+                    <field name="dns_provider"/>
+                    <field name="domain_registrar"/>
                     <field name="state" widget="badge"/>
                     <field name="is_reachable" widget="boolean"/>
                     <field name="valid_until"/>
@@ -115,6 +127,10 @@
                             <group name="basic_info">
                                 <field name="domain"/>
                                 <field name="port"/>
+                                <field name="dns_provider"/>
+                                <field name="dns_provider_other" invisible="dns_provider != 'other'"/>
+                                <field name="domain_registrar"/>
+                                <field name="domain_registrar_other" invisible="domain_registrar != 'other'"/>
                                 <field name="is_reachable" widget="boolean"/>
                                 <field name="response_time"/>
                             </group>
@@ -159,6 +175,8 @@
                 <search>
                     <field name="domain"/>
                     <field name="issuer"/>
+                    <field name="dns_provider"/>
+                    <field name="domain_registrar"/>
                     <field name="state"/>
                     <filter string="Valid" name="valid" domain="[('state', '=', 'valid')]"/>
                     <filter string="Expiring Soon" name="expiring_soon" domain="[('state', '=', 'expiring_soon')]"/>
@@ -169,6 +187,8 @@
                     <group expand="0" string="Group By">
                         <filter string="Status" name="group_state" context="{'group_by': 'state'}"/>
                         <filter string="Issuer" name="group_issuer" context="{'group_by': 'issuer'}"/>
+                        <filter string="DNS Provider" name="group_dns_provider" context="{'group_by': 'dns_provider'}"/>
+                        <filter string="Domain Registrar" name="group_domain_registrar" context="{'group_by': 'domain_registrar'}"/>
                     </group>
                 </search>
             </field>

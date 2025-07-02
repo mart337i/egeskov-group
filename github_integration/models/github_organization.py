@@ -56,7 +56,10 @@ class GitHubOrganization(models.Model):
     
     # Relations
     repository_ids = fields.One2many('github.repository', 'organization_id', string='Repositories')
+    starred_repository_ids = fields.Many2many('github.repository', 'github_org_starred_repo_rel', 'organization_id', 'repository_id', string='Starred Repositories')
+    all_repository_ids = fields.Many2many('github.repository', compute='_compute_all_repositories', string='All Repositories (Owned + Starred)')
     repository_count = fields.Integer(string='Repository Count', compute='_compute_repository_count', store=True)
+    starred_count = fields.Integer(string='Starred Count', compute='_compute_starred_count', store=True)
     
     # Dates
     created_at = fields.Datetime(string='Created At')
@@ -71,6 +74,24 @@ class GitHubOrganization(models.Model):
         """Compute the number of repositories"""
         for org in self:
             org.repository_count = len(org.repository_ids)
+
+    @api.depends('starred_repository_ids')
+    def _compute_starred_count(self):
+        """Compute the number of starred repositories"""
+        for org in self:
+            org.starred_count = len(org.starred_repository_ids)
+
+    @api.depends('repository_ids', 'starred_repository_ids')
+    def _compute_all_repositories(self):
+        """Compute all repositories (owned + starred) for this organization/user"""
+        for org in self:
+            # Combine owned and starred repositories, removing duplicates
+            all_repos = org.repository_ids | org.starred_repository_ids
+            org.all_repository_ids = all_repos
+
+    def get_all_repositories(self):
+        """Get all repositories (owned + starred) for this organization/user"""
+        return self.all_repository_ids
 
     @api.model
     def create_or_update_from_github_data(self, github_data):
@@ -178,6 +199,10 @@ class GitHubOrganization(models.Model):
                 else:
                     repositories = self.env['github.repository'].fetch_user_repositories(org.login, github_token)
                 
+                # Fetch starred repositories for users (only works with valid token)
+                if org.type == 'User' and token_valid:
+                    starred_repos = org._fetch_starred_repositories(github_token)
+                
                 # Update organization reference in repositories
                 repo_records = self.env['github.repository'].search([
                     ('owner', '=', org.login)
@@ -188,8 +213,12 @@ class GitHubOrganization(models.Model):
                 org.sync_status = 'success'
                 
                 # Prepare success message
+                starred_count = len(starred_repos) if org.type == 'User' and token_valid else 0
                 if token_valid:
-                    message = _('Successfully synced %d repositories for %s (including private repos)') % (len(repositories), org.login)
+                    if org.type == 'User' and starred_count > 0:
+                        message = _('Successfully synced %d repositories and %d starred repositories for %s (including private repos)') % (len(repositories), starred_count, org.login)
+                    else:
+                        message = _('Successfully synced %d repositories for %s (including private repos)') % (len(repositories), org.login)
                 else:
                     message = _('Successfully synced %d public repositories for %s (no valid token for private repos)') % (len(repositories), org.login)
                 
@@ -246,6 +275,124 @@ class GitHubOrganization(models.Model):
         except Exception as e:
             _logger.error("Error fetching organization details for %s: %s", self.login, str(e))
 
+    def _fetch_starred_repositories(self, github_token):
+        """Fetch starred repositories for this user"""
+        if not github_token or self.type != 'User':
+            return []
+        
+        headers = {'Accept': 'application/vnd.github.v3+json', 'Authorization': f'token {github_token}'}
+        starred_repos = []
+        page = 1
+        
+        try:
+            while True:
+                url = f'https://api.github.com/users/{self.login}/starred?per_page=100&page={page}'
+                response = requests.get(url, headers=headers, timeout=30)
+                
+                if response.status_code == 200:
+                    repos_data = response.json()
+                    if not repos_data:
+                        break
+                    
+                    _logger.info("Found %d starred repositories on page %d for %s", len(repos_data), page, self.login)
+                    
+                    for repo_data in repos_data:
+                        # Create or update repository record
+                        repo_vals = self.env['github.repository']._prepare_repository_values(repo_data)
+                        existing_repo = self.env['github.repository'].search([('full_name', '=', repo_vals['full_name'])], limit=1)
+                        
+                        if existing_repo:
+                            existing_repo.write(repo_vals)
+                            starred_repos.append(existing_repo.id)
+                        else:
+                            # Create organization for the repo owner if it doesn't exist
+                            owner_login = repo_vals['owner']
+                            organization = self.env['github.organization'].search([('login', '=', owner_login)], limit=1)
+                            if not organization:
+                                organization = self.env['github.organization'].create({
+                                    'login': owner_login,
+                                    'type': 'User',
+                                    'is_active': False,  # Don't auto-sync starred repo owners
+                                })
+                            repo_vals['organization_id'] = organization.id
+                            new_repo = self.env['github.repository'].create(repo_vals)
+                            starred_repos.append(new_repo.id)
+                    
+                    page += 1
+                    if len(repos_data) < 100:
+                        break
+                        
+                elif response.status_code == 404:
+                    _logger.warning("User not found or no starred repositories: %s", self.login)
+                    break
+                elif response.status_code == 403:
+                    _logger.error("Access forbidden when fetching starred repos for %s", self.login)
+                    break
+                else:
+                    _logger.error("Failed to fetch starred repositories - HTTP %d: %s", response.status_code, response.text[:200])
+                    break
+                    
+        except Exception as e:
+            _logger.error("Error fetching starred repositories for %s: %s", self.login, str(e))
+        
+        # Update the starred repositories relationship
+        if starred_repos:
+            self.starred_repository_ids = [(6, 0, starred_repos)]
+            _logger.info("Updated %d starred repositories for %s", len(starred_repos), self.login)
+        
+        return starred_repos
+
+    def action_sync_starred_repositories(self):
+        """Sync starred repositories for this user"""
+        if self.type != 'User':
+            return {
+                'type': 'ir.actions.client',
+                'tag': 'display_notification',
+                'params': {
+                    'title': _('Warning'),
+                    'message': _('Starred repositories can only be synced for users, not organizations'),
+                    'type': 'warning',
+                    'sticky': False,
+                }
+            }
+        
+        github_token = self.github_token or self.env['ir.config_parameter'].sudo().get_param('github_integration.token')
+        if not github_token:
+            return {
+                'type': 'ir.actions.client',
+                'tag': 'display_notification',
+                'params': {
+                    'title': _('Error'),
+                    'message': _('GitHub token is required to fetch starred repositories'),
+                    'type': 'danger',
+                    'sticky': True,
+                }
+            }
+        
+        try:
+            starred_repos = self._fetch_starred_repositories(github_token)
+            return {
+                'type': 'ir.actions.client',
+                'tag': 'display_notification',
+                'params': {
+                    'title': _('Success'),
+                    'message': _('Successfully synced %d starred repositories') % len(starred_repos),
+                    'type': 'success',
+                    'sticky': False,
+                }
+            }
+        except Exception as e:
+            return {
+                'type': 'ir.actions.client',
+                'tag': 'display_notification',
+                'params': {
+                    'title': _('Error'),
+                    'message': _('Error syncing starred repositories: %s') % str(e),
+                    'type': 'danger',
+                    'sticky': True,
+                }
+            }
+
     def action_view_repositories(self):
         """View repositories for this organization"""
         return {
@@ -255,6 +402,17 @@ class GitHubOrganization(models.Model):
             'view_mode': 'kanban,list,form',
             'domain': [('organization_id', '=', self.id)],
             'context': {'default_organization_id': self.id}
+        }
+
+    def action_view_starred_repositories(self):
+        """View starred repositories for this user"""
+        return {
+            'name': _('Starred Repositories - %s') % self.login,
+            'type': 'ir.actions.act_window',
+            'res_model': 'github.repository',
+            'view_mode': 'kanban,list,form',
+            'domain': [('id', 'in', self.starred_repository_ids.ids)],
+            'context': {'search_default_starred': 1}
         }
 
     def action_open_github(self):

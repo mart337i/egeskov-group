@@ -1,6 +1,6 @@
 {
     'name': 'GitHub Integration',
-    'version': '18.0.2.0.1',
+    'version': '18.0.2.1.3',
     'category': 'Project',
     'summary': 'Integrate GitHub repositories with Odoo projects',
     'description': """

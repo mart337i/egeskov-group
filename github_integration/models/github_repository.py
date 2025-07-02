@@ -42,9 +42,11 @@ class GitHubRepository(models.Model):
     activity_sequence = fields.Integer(string='Activity Sequence', compute='_compute_activity_sequence', store=True)
     
     days_since_last_push = fields.Integer(string='Days Since Last Push', compute='_compute_days_since_push', store=True)
+    is_starred = fields.Boolean(string='Is Starred', compute='_compute_is_starred')
     
     # Relations
     organization_id = fields.Many2one('github.organization', string='Organization/User', ondelete='cascade')
+    starred_by_org_ids = fields.Many2many('github.organization', 'github_org_starred_repo_rel', 'repository_id', 'organization_id', string='Starred By Organizations')
     branch_ids = fields.One2many('github.branch', 'repository_id', string='Branches')
     project_ids = fields.One2many('project.project', 'github_repository_id', string='Projects')
     
@@ -93,6 +95,12 @@ class GitHubRepository(models.Model):
         }
         for repo in self:
             repo.activity_sequence = sequence_map.get(repo.activity_status, 99)
+
+    @api.depends('starred_by_org_ids')
+    def _compute_is_starred(self):
+        """Compute if repository is starred by any organization"""
+        for repo in self:
+            repo.is_starred = bool(repo.starred_by_org_ids)
 
     @api.model
     def fetch_user_repositories(self, username, github_token=None):

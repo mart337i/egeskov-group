@@ -136,6 +136,8 @@
                 <header>
                     <button name="action_sync_repositories" string="Sync Repositories" type="object" 
                             class="btn-primary" title="Fetch and sync all repositories from GitHub"/>
+                    <button name="action_sync_starred_repositories" string="Sync Starred" type="object" 
+                            class="btn-secondary" title="Fetch and sync starred repositories" invisible="type != 'User'"/>
                     <button name="action_test_token" string="Test Token" type="object" 
                             class="btn-secondary" title="Verify GitHub token authentication"/>
                     <field name="sync_status" widget="statusbar" statusbar_visible="never,success,error"/>
@@ -158,6 +160,15 @@
                                     <field name="repository_count" nolabel="1"/>
                                 </span>
                                 <span class="o_stat_text">Repositories</span>
+                            </div>
+                        </button>
+                        <button name="action_view_starred_repositories" type="object" class="oe_stat_button" 
+                                icon="fa-star" title="View starred repositories" invisible="type != 'User'">
+                            <div class="o_field_widget o_stat_info">
+                                <span class="o_stat_value">
+                                    <field name="starred_count" nolabel="1"/>
+                                </span>
+                                <span class="o_stat_text">Starred</span>
                             </div>
                         </button>
                     </div>
@@ -246,9 +257,29 @@
                     <notebook>
                         <!-- Repositories Tab -->
                         <page string="Repositories" name="repositories">
-                            <field name="repository_ids" nolabel="1">
-                                <list string="Organization Repositories">
+                            <field name="all_repository_ids" nolabel="1" 
+                                   domain="[('project_ids', '!=', False), ('project_ids.stage_id.fold', '=', False)]">
+                                <list string="All Repositories (Owned + Starred)">
                                     <field name="name" string="Repository Name"/>
+                                    <field name="full_name" string="Full Name"/>
+                                    <field name="description" string="Description"/>
+                                    <field name="language" string="Primary Language"/>
+                                    <field name="stars_count" string="Stars"/>
+                                    <field name="forks_count" string="Forks"/>
+                                    <field name="is_private" string="Private"/>
+                                    <field name="updated_at" string="Last Updated"/>
+                                    <button name="action_open_github" type="object" 
+                                            icon="fa-external-link" title="Open repository on GitHub"/>
+                                </list>
+                            </field>
+                        </page>
+                        
+                        <!-- Starred Repositories Tab -->
+                        <page string="Starred Repositories" name="starred_repositories" invisible="type != 'User'">
+                            <field name="starred_repository_ids" nolabel="1">
+                                <list string="Starred Repositories">
+                                    <field name="name" string="Repository Name"/>
+                                    <field name="full_name" string="Full Name"/>
                                     <field name="description" string="Description"/>
                                     <field name="language" string="Primary Language"/>
                                     <field name="stars_count" string="Stars"/>

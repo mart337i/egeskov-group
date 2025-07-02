@@ -23,6 +23,7 @@
                 <field name="activity_status"/>
                 <field name="activity_sequence"/>
                 <field name="days_since_last_push"/>
+                <field name="is_starred"/>
                 <templates>
                     <t t-name="kanban-box">
                         <div class="oe_kanban_card oe_kanban_global_click" t-attf-data-activity="#{record.activity_status.raw_value}">
@@ -35,6 +36,9 @@
                                         </span>
                                         <span t-if="record.is_fork.raw_value" class="badge badge-info ms-1" title="Forked Repository">
                                             <i class="fa fa-code-fork"/>
+                                        </span>
+                                        <span t-if="record.is_starred.raw_value" class="badge badge-warning ms-1" title="Starred Repository">
+                                            <i class="fa fa-star"/>
                                         </span>
                                         <!-- Activity indicator -->
                                         <span t-if="record.activity_status.raw_value == 'very_active'" class="badge" style="background-color: #28a745; color: white;" title="Very Active - Updated within 24 hours">
@@ -255,7 +259,8 @@
                         
                         <!-- Related Projects Tab -->
                         <page string="Related Projects" name="projects">
-                            <field name="project_ids" nolabel="1">
+                            <field name="project_ids" nolabel="1" 
+                                   domain="[('stage_id.fold', '=', False)]">
                                 <list string="Related Projects">
                                     <field name="name" string="Project Name"/>
                                     <field name="partner_id" string="Customer"/>

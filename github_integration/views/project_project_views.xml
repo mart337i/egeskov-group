@@ -61,7 +61,8 @@
         <field name="arch" type="xml">
             <xpath expr="//field[@name='partner_id']" position="after">
                 <field name="is_software_project"/>
-                <field name="github_repository_id" invisible="is_software_project==False"/>
+                <field name="github_repository_id" invisible="is_software_project==False"
+                       domain="['|', ('organization_id.is_active', '=', True), ('starred_by_org_ids.is_active', '=', True)]"/>
                 <field name="github_repo_url" invisible="is_software_project==False"/>
             </xpath>
         </field>

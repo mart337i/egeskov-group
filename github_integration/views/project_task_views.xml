@@ -25,6 +25,7 @@
                     <field name="github_branch_id" 
                            placeholder="Select a branch..."
                            nolabel="1"
+                           domain="[('repository_id', '=', project_id.github_repository_id)]"
                            options="{'no_create': True, 'no_edit': True}"/>
                 </div>
             </xpath>

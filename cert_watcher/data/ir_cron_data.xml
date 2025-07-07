@@ -6,7 +6,7 @@
             <field name="name">SSL Certificate Auto Renewal</field>
             <field name="model_id" ref="model_ssl_certificate"/>
             <field name="state">code</field>
-            <field name="code">model.cron_auto_renew_certificates()</field>
+            <field name="code">model.cron_refresh_certificates()</field>
             <field name="interval_number">1</field>
             <field name="interval_type">days</field>
             <field name="active">True</field>

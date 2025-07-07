@@ -413,9 +413,7 @@ class SSLCertificate(models.Model):
     @api.model
     def cron_refresh_certificates(self):
         """Cron job to refresh all certificate information"""
-        certificates = self.search([])
-        
-        for cert in certificates:
+        for cert in self:
             try:
                 cert._compute_certificate_info()
                 _logger.info(f"Refreshed certificate info for: {cert.domain}")

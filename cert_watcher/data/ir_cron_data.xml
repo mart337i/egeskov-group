@@ -3,7 +3,7 @@
         
         <!-- Cron job for auto-renewal -->
         <record id="ir_cron_ssl_certificate_auto_renew" model="ir.cron">
-            <field name="name">SSL Certificate Auto Renewal</field>
+            <field name="name">SSL Refresh certificates</field>
             <field name="model_id" ref="model_ssl_certificate"/>
             <field name="state">code</field>
             <field name="code">model.cron_refresh_certificates()</field>

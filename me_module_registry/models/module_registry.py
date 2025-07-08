@@ -65,8 +65,8 @@ class ModuleRegistry(models.Model):
     github_url = fields.Char(string='GitHub URL', compute='_compute_github_url', store=True)
     
     _sql_constraints = [
-        ('unique_technical_name_repo', 'unique(technical_name, github_repository_id)', 
-         'Technical name must be unique per repository!'),
+        ('unique_technical_name_repo_version', 'unique(technical_name, github_repository_id, version)', 
+         'Technical name and version must be unique per repository!'),
     ]
 
     @api.depends('github_repository_id', 'github_path')
@@ -241,15 +241,16 @@ class ModuleRegistry(models.Model):
             
             existing_module = self.search([
                 ('technical_name', '=', module_data['technical_name']),
-                ('github_repository_id', '=', repository.id)
+                ('github_repository_id', '=', repository.id),
+                ('version', '=', module_data['version'])
             ], limit=1)
             
             if existing_module:
                 existing_module.write(module_data)
-                _logger.info(f"Updated module {module_data['technical_name']} from {repository.full_name}")
+                _logger.info(f"Updated module {module_data['technical_name']} v{module_data['version']} from {repository.full_name}")
             else:
                 self.create(module_data)
-                _logger.info(f"Created module {module_data['technical_name']} from {repository.full_name}")
+                _logger.info(f"Created module {module_data['technical_name']} v{module_data['version']} from {repository.full_name}")
                 
         except Exception as e:
             _logger.error(f"Error creating/updating module {module_data.get('technical_name', 'unknown')}: {str(e)}")
@@ -264,7 +265,8 @@ class ModuleRegistry(models.Model):
             
             existing_module = self.search([
                 ('technical_name', '=', module_data['technical_name']),
-                ('github_repository_id', '=', repository.id)
+                ('github_repository_id', '=', repository.id),
+                ('version', '=', module_data.get('version', ''))
             ], limit=1)
             
             if existing_module:

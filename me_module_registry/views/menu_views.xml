@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Module Registry Menu -->
+    <menuitem id="menu_module_registry_root" 
+              name="Module Registry" 
+              sequence="10"/>
+    
+    <menuitem id="menu_module_library" 
+              name="Module Library" 
+              parent="menu_module_registry_root" 
+              action="action_module_library" 
+              sequence="10"/>
+              
+    <menuitem id="menu_module_registry" 
+              name="Module Registry" 
+              parent="menu_module_registry_root" 
+              action="action_module_registry" 
+              sequence="20"/>
+    
+</odoo>

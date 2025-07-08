@@ -1,0 +1,215 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Odoo Version Data -->
+
+    <!-- Future version placeholder (for development) -->
+    <record id="odoo_version_19_0" model="odoo.version">
+        <field name="name">19.0</field>
+        <field name="full_name">Odoo 19.0</field>
+        <field name="major_version">19</field>
+        <field name="minor_version">0</field>
+        <field name="release_date">2025-10-15</field>
+        <field name="is_lts">False</field>
+        <field name="is_current">False</field>
+        <field name="status">development</field>
+        <field name="python_version">3.11+</field>
+        <field name="postgresql_version">13+</field>
+        <field name="description">Future version in development</field>
+        <field name="sequence">5</field>
+    </record>
+
+    <!-- Odoo 18.0 (Current) -->
+    <record id="odoo_version_18_0" model="odoo.version">
+        <field name="name">18.0</field>
+        <field name="full_name">Odoo 18.0</field>
+        <field name="major_version">18</field>
+        <field name="minor_version">0</field>
+        <field name="release_date">2024-10-15</field>
+        <field name="end_of_support">2025-10-15</field>
+        <field name="is_lts">False</field>
+        <field name="is_current">True</field>
+        <field name="status">stable</field>
+        <field name="python_version">3.10+</field>
+        <field name="postgresql_version">12+</field>
+        <field name="description">Latest stable version with new features and improvements</field>
+        <field name="release_notes_url">https://www.odoo.com/odoo-18-release-notes</field>
+        <field name="sequence">10</field>
+    </record>
+
+    <!-- Odoo 17.0 (LTS) -->
+    <record id="odoo_version_17_0" model="odoo.version">
+        <field name="name">17.0</field>
+        <field name="full_name">Odoo 17.0 LTS</field>
+        <field name="major_version">17</field>
+        <field name="minor_version">0</field>
+        <field name="release_date">2023-10-11</field>
+        <field name="end_of_support">2028-10-11</field>
+        <field name="is_lts">True</field>
+        <field name="is_current">False</field>
+        <field name="status">stable</field>
+        <field name="python_version">3.10+</field>
+        <field name="postgresql_version">12+</field>
+        <field name="description">Long Term Support version with 5 years of support</field>
+        <field name="release_notes_url">https://www.odoo.com/odoo-17-release-notes</field>
+        <field name="sequence">20</field>
+    </record>
+
+    <!-- Odoo 16.0 -->
+    <record id="odoo_version_16_0" model="odoo.version">
+        <field name="name">16.0</field>
+        <field name="full_name">Odoo 16.0</field>
+        <field name="major_version">16</field>
+        <field name="minor_version">0</field>
+        <field name="release_date">2022-10-12</field>
+        <field name="end_of_support">2024-10-12</field>
+        <field name="is_lts">False</field>
+        <field name="is_current">False</field>
+        <field name="status">maintenance</field>
+        <field name="python_version">3.8+</field>
+        <field name="postgresql_version">10+</field>
+        <field name="description">End of life version</field>
+        <field name="release_notes_url">https://www.odoo.com/odoo-16-release-notes</field>
+        <field name="sequence">30</field>
+    </record>
+
+    <!-- Odoo 15.0 (LTS) -->
+    <record id="odoo_version_15_0" model="odoo.version">
+        <field name="name">15.0</field>
+        <field name="full_name">Odoo 15.0 LTS</field>
+        <field name="major_version">15</field>
+        <field name="minor_version">0</field>
+        <field name="release_date">2021-10-14</field>
+        <field name="end_of_support">2026-10-14</field>
+        <field name="is_lts">True</field>
+        <field name="is_current">False</field>
+        <field name="status">deprecated</field>
+        <field name="python_version">3.8+</field>
+        <field name="postgresql_version">10+</field>
+        <field name="description">End of life version</field>
+        <field name="release_notes_url">https://www.odoo.com/odoo-15-release-notes</field>
+        <field name="sequence">40</field>
+    </record>
+
+    <!-- Odoo 14.0 -->
+    <record id="odoo_version_14_0" model="odoo.version">
+        <field name="name">14.0</field>
+        <field name="full_name">Odoo 14.0</field>
+        <field name="major_version">14</field>
+        <field name="minor_version">0</field>
+        <field name="release_date">2020-10-14</field>
+        <field name="end_of_support">2022-10-14</field>
+        <field name="is_lts">False</field>
+        <field name="is_current">False</field>
+        <field name="status">deprecated</field>
+        <field name="python_version">3.6+</field>
+        <field name="postgresql_version">9.6+</field>
+        <field name="description">End of life version</field>
+        <field name="release_notes_url">https://www.odoo.com/odoo-14-release-notes</field>
+        <field name="sequence">50</field>
+    </record>
+
+    <!-- Odoo 13.0 (LTS) -->
+    <record id="odoo_version_13_0" model="odoo.version">
+        <field name="name">13.0</field>
+        <field name="full_name">Odoo 13.0</field>
+        <field name="major_version">13</field>
+        <field name="minor_version">0</field>
+        <field name="release_date">2019-10-08</field>
+        <field name="end_of_support">2024-10-08</field>
+        <field name="is_lts">True</field>
+        <field name="is_current">False</field>
+        <field name="status">deprecated</field>
+        <field name="python_version">3.6+</field>
+        <field name="postgresql_version">9.6+</field>
+        <field name="description">End of life version</field>
+        <field name="release_notes_url">https://www.odoo.com/odoo-13-release-notes</field>
+        <field name="sequence">60</field>
+    </record>
+
+    <!-- Odoo 12.0 -->
+    <record id="odoo_version_12_0" model="odoo.version">
+        <field name="name">12.0</field>
+        <field name="full_name">Odoo 12.0</field>
+        <field name="major_version">12</field>
+        <field name="minor_version">0</field>
+        <field name="release_date">2018-10-03</field>
+        <field name="end_of_support">2020-10-03</field>
+        <field name="is_lts">False</field>
+        <field name="is_current">False</field>
+        <field name="status">end_of_life</field>
+        <field name="python_version">3.5+</field>
+        <field name="postgresql_version">9.5+</field>
+        <field name="description">End of life version</field>
+        <field name="release_notes_url">https://www.odoo.com/odoo-12-release-notes</field>
+        <field name="sequence">70</field>
+    </record>
+
+    <!-- Odoo 11.0 (LTS) -->
+    <record id="odoo_version_11_0" model="odoo.version">
+        <field name="name">11.0</field>
+        <field name="full_name">Odoo 11.0 LTS</field>
+        <field name="major_version">11</field>
+        <field name="minor_version">0</field>
+        <field name="release_date">2017-10-04</field>
+        <field name="end_of_support">2022-10-04</field>
+        <field name="is_lts">True</field>
+        <field name="is_current">False</field>
+        <field name="status">end_of_life</field>
+        <field name="python_version">3.5+</field>
+        <field name="postgresql_version">9.5+</field>
+        <field name="description">LTS version, end of life</field>
+        <field name="release_notes_url">https://www.odoo.com/odoo-11-release-notes</field>
+        <field name="sequence">80</field>
+    </record>
+
+    <!-- Odoo 10.0 -->
+    <record id="odoo_version_10_0" model="odoo.version">
+        <field name="name">10.0</field>
+        <field name="full_name">Odoo 10.0</field>
+        <field name="major_version">10</field>
+        <field name="minor_version">0</field>
+        <field name="release_date">2016-10-05</field>
+        <field name="end_of_support">2018-10-05</field>
+        <field name="is_lts">False</field>
+        <field name="is_current">False</field>
+        <field name="status">end_of_life</field>
+        <field name="python_version">2.7</field>
+        <field name="postgresql_version">9.3+</field>
+        <field name="description">Legacy version, end of life</field>
+        <field name="sequence">90</field>
+    </record>
+
+    <!-- Odoo 9.0 (LTS) -->
+    <record id="odoo_version_9_0" model="odoo.version">
+        <field name="name">9.0</field>
+        <field name="full_name">Odoo 9.0 LTS</field>
+        <field name="major_version">9</field>
+        <field name="minor_version">0</field>
+        <field name="release_date">2015-10-07</field>
+        <field name="end_of_support">2020-10-07</field>
+        <field name="is_lts">True</field>
+        <field name="is_current">False</field>
+        <field name="status">end_of_life</field>
+        <field name="python_version">2.7</field>
+        <field name="postgresql_version">9.1+</field>
+        <field name="description">Legacy LTS version, end of life</field>
+        <field name="sequence">100</field>
+    </record>
+
+    <!-- Odoo 8.0 -->
+    <record id="odoo_version_8_0" model="odoo.version">
+        <field name="name">8.0</field>
+        <field name="full_name">Odoo 8.0</field>
+        <field name="major_version">8</field>
+        <field name="minor_version">0</field>
+        <field name="release_date">2014-09-18</field>
+        <field name="end_of_support">2016-09-18</field>
+        <field name="is_lts">False</field>
+        <field name="is_current">False</field>
+        <field name="status">end_of_life</field>
+        <field name="python_version">2.7</field>
+        <field name="postgresql_version">9.1+</field>
+        <field name="description">Legacy version, end of life</field>
+        <field name="sequence">110</field>
+    </record>
+</odoo>

@@ -1,0 +1,204 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Odoo Version list View -->
+    <record id="view_odoo_version_list" model="ir.ui.view">
+        <field name="name">odoo.version.list</field>
+        <field name="model">odoo.version</field>
+        <field name="arch" type="xml">
+            <list string="Odoo Versions" decoration-success="status=='stable'" decoration-info="is_lts==True" decoration-warning="status=='maintenance'" decoration-danger="status=='end_of_life'" decoration-muted="status=='deprecated'">
+                <field name="display_name"/>
+                <field name="version_string"/>
+                <field name="status"/>
+                <field name="is_lts"/>
+                <field name="is_current"/>
+                <field name="is_supported"/>
+                <field name="release_date"/>
+                <field name="end_of_support"/>
+                <field name="python_version"/>
+                <field name="module_count"/>
+            </list>
+        </field>
+    </record>
+
+    <!-- Odoo Version Form View -->
+    <record id="view_odoo_version_form" model="ir.ui.view">
+        <field name="name">odoo.version.form</field>
+        <field name="model">odoo.version</field>
+        <field name="arch" type="xml">
+            <form string="Odoo Version">
+                <header>
+                    <button name="action_open_release_notes" type="object" string="Release Notes" class="btn-primary" icon="fa-external-link" invisible="release_notes_url == False"/>
+                    <field name="status" widget="statusbar" statusbar_visible="development,beta,stable,maintenance,deprecated,end_of_life"/>
+                </header>
+                <sheet>
+                    <div class="oe_title">
+                        <h1>
+                            <field name="display_name" placeholder="Version Display Name"/>
+                        </h1>
+                        <h3>
+                            <field name="version_string" readonly="1"/>
+                        </h3>
+                    </div>
+                    
+                    <group>
+                        <group string="Version Information">
+                            <field name="name"/>
+                            <field name="full_name"/>
+                            <field name="major_version"/>
+                            <field name="minor_version"/>
+                            <field name="version_code" readonly="1"/>
+                        </group>
+                        <group string="Status &amp;amp; Support">
+                            <field name="is_current"/>
+                            <field name="is_lts"/>
+                            <field name="is_supported" readonly="1"/>
+                            <field name="release_date"/>
+                            <field name="end_of_support"/>
+                        </group>
+                    </group>
+                    
+                    <group>
+                        <group string="Technical Requirements">
+                            <field name="python_version"/>
+                            <field name="postgresql_version"/>
+                            <field name="is_enterprise"/>
+                            <field name="is_community"/>
+                        </group>
+                        <group string="Sequence &amp; Order">
+                            <field name="sequence"/>
+                        </group>
+                    </group>
+                    
+                    <notebook>
+                        <page string="Description">
+                            <field name="description" placeholder="Version description and key features..."/>
+                        </page>
+                        <page string="Links">
+                            <group>
+                                <field name="release_notes_url" widget="url"/>
+                            </group>
+                        </page>
+                    </notebook>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <!-- Odoo Version Search View -->
+    <record id="view_odoo_version_search" model="ir.ui.view">
+        <field name="name">odoo.version.search</field>
+        <field name="model">odoo.version</field>
+        <field name="arch" type="xml">
+            <search string="Odoo Versions">
+                <field name="name"/>
+                <field name="display_name"/>
+                <field name="major_version"/>
+                <field name="status"/>
+                
+                <filter string="Current Version" name="current" domain="[('is_current', '=', True)]"/>
+                <filter string="LTS Versions" name="lts" domain="[('is_lts', '=', True)]"/>
+                <filter string="Supported" name="supported" domain="[('is_supported', '=', True)]"/>
+                
+                <separator/>
+                <filter string="Stable" name="stable" domain="[('status', '=', 'stable')]"/>
+                <filter string="Development" name="development" domain="[('status', '=', 'development')]"/>
+                <filter string="Beta" name="beta" domain="[('status', '=', 'beta')]"/>
+                <filter string="Maintenance" name="maintenance" domain="[('status', '=', 'maintenance')]"/>
+                <filter string="Deprecated" name="deprecated" domain="[('status', '=', 'deprecated')]"/>
+                <filter string="End of Life" name="end_of_life" domain="[('status', '=', 'end_of_life')]"/>
+                
+                <separator/>
+                <filter string="Enterprise Available" name="enterprise" domain="[('is_enterprise', '=', True)]"/>
+                <filter string="Community Available" name="community" domain="[('is_community', '=', True)]"/>
+                
+                <group expand="0" string="Group By">
+                    <filter string="Status" name="group_status" context="{'group_by': 'status'}"/>
+                    <filter string="Major Version" name="group_major" context="{'group_by': 'major_version'}"/>
+                    <filter string="LTS" name="group_lts" context="{'group_by': 'is_lts'}"/>
+                    <filter string="Support Status" name="group_supported" context="{'group_by': 'is_supported'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <!-- Odoo Version Kanban View -->
+    <record id="view_odoo_version_kanban" model="ir.ui.view">
+        <field name="name">odoo.version.kanban</field>
+        <field name="model">odoo.version</field>
+        <field name="arch" type="xml">
+            <kanban class="o_kanban_mobile">
+                <field name="display_name"/>
+                <field name="version_string"/>
+                <field name="status"/>
+                <field name="is_lts"/>
+                <field name="is_current"/>
+                <field name="is_supported"/>
+                <field name="release_date"/>
+                <field name="end_of_support"/>
+                <field name="module_count"/>
+                <templates>
+                    <t t-name="kanban-box">
+                        <div class="oe_kanban_card oe_kanban_global_click">
+                            <div class="o_kanban_record_top">
+                                <div class="o_kanban_record_headings">
+                                    <strong class="o_kanban_record_title">
+                                        <field name="display_name"/>
+                                    </strong>
+                                    <small class="o_kanban_record_subtitle text-muted">
+                                        <field name="version_string"/>
+                                    </small>
+                                </div>
+                                <div class="o_kanban_record_top_right">
+                                    <span t-if="record.is_current.raw_value" class="badge badge-success">Current</span>
+                                    <span t-if="record.is_lts.raw_value" class="badge badge-info">LTS</span>
+                                    <span t-if="!record.is_supported.raw_value" class="badge badge-danger">Unsupported</span>
+                                </div>
+                            </div>
+                            <div class="o_kanban_record_body">
+                                <div class="text-muted">
+                                    Status: <field name="status"/>
+                                </div>
+                                <div class="text-muted" t-if="record.release_date.raw_value">
+                                    Released: <field name="release_date"/>
+                                </div>
+                                <div class="text-muted" t-if="record.end_of_support.raw_value">
+                                    Support until: <field name="end_of_support"/>
+                                </div>
+                                <div class="text-muted" t-if="record.module_count.raw_value">
+                                    <i class="fa fa-cubes"/> <field name="module_count"/> modules
+                                </div>
+                            </div>
+                        </div>
+                    </t>
+                </templates>
+            </kanban>
+        </field>
+    </record>
+
+    <!-- Odoo Version Action -->
+    <record id="action_odoo_version" model="ir.actions.act_window">
+        <field name="name">Odoo Versions</field>
+        <field name="res_model">odoo.version</field>
+        <field name="view_mode">kanban,list,form</field>
+        <field name="context">{'search_default_supported': 1}</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                No Odoo versions found!
+            </p>
+            <p>
+                Create Odoo version records to track different versions and their support status.
+            </p>
+        </field>
+    </record>
+
+    <!-- Menu Items -->
+    <menuitem id="menu_odoo_version_root" 
+              name="Odoo Versions" 
+              sequence="100"/>
+    
+    <menuitem id="menu_odoo_version" 
+              name="Versions" 
+              parent="menu_odoo_version_root" 
+              action="action_odoo_version" 
+              sequence="10"/>
+</odoo>

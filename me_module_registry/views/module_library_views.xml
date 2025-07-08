@@ -1,0 +1,190 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Module Library list View -->
+    <record id="view_module_library_list" model="ir.ui.view">
+        <field name="name">module.library.list</field>
+        <field name="model">module.library</field>
+        <field name="arch" type="xml">
+            <list string="Module Libraries" decoration-success="sync_status=='success'" decoration-danger="sync_status=='error'" decoration-muted="sync_status=='never'">
+                <field name="name"/>
+                <field name="repository_name"/>
+                <field name="module_count"/>
+                <field name="auto_sync"/>
+                <field name="sync_frequency"/>
+                <field name="last_sync"/>
+                <field name="sync_status"/>
+            </list>
+        </field>
+    </record>
+
+    <!-- Module Library Form View -->
+    <record id="view_module_library_form" model="ir.ui.view">
+        <field name="name">module.library.form</field>
+        <field name="model">module.library</field>
+        <field name="arch" type="xml">
+            <form string="Module Library">
+                <header>
+                    <button name="action_sync_repository" type="object" string="Sync Repository" class="btn-primary" icon="fa-refresh"/>
+                    <button name="action_open_repository" type="object" string="Open Repository" class="btn-secondary" icon="fa-github"/>
+                    <button name="toggle_auto_sync" type="object" string="Toggle Auto Sync" class="btn-secondary" icon="fa-toggle-on"/>
+                    <field name="sync_status" widget="statusbar" statusbar_visible="never,pending,success,error"/>
+                </header>
+                <sheet>
+                    <div class="oe_button_box" name="button_box">
+                        <button name="action_view_modules" type="object" class="oe_stat_button" icon="fa-cubes">
+                            <field name="module_count" widget="statinfo" string="Modules"/>
+                        </button>
+                        <button name="action_open_repository" type="object" class="oe_stat_button" icon="fa-github">
+                            <div class="o_field_widget o_stat_info">
+                                <span class="o_stat_text">Repository</span>
+                            </div>
+                        </button>
+                    </div>
+                    
+                    <group>
+                        <group>
+                            <field name="name"/>
+                            <field name="description"/>
+                            <field name="github_repository_id"/>
+                            <field name="repository_name"/>
+                        </group>
+                        <group>
+                            <field name="auto_sync"/>
+                            <field name="sync_frequency"/>
+                            <field name="last_sync"/>
+                            <field name="module_count"/>
+                        </group>
+                    </group>
+                    
+                    <notebook>
+                        <page string="Modules">
+                            <field name="module_ids">
+                                <list decoration-success="sync_status=='success'" decoration-danger="sync_status=='error'">
+                                    <field name="name"/>
+                                    <field name="technical_name"/>
+                                    <field name="version"/>
+                                    <field name="odoo_version_id"/>
+                                    <field name="category"/>
+                                    <field name="author"/>
+                                    <field name="installable"/>
+                                    <field name="application"/>
+                                    <field name="sync_status"/>
+                                </list>
+                            </field>
+                        </page>
+                        <page string="Repository Info">
+                            <group>
+                                <field name="repository_url" widget="url"/>
+                                <field name="github_repository_id"/>
+                            </group>
+                        </page>
+                    </notebook>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <!-- Module Library Search View -->
+    <record id="view_module_library_search" model="ir.ui.view">
+        <field name="name">module.library.search</field>
+        <field name="model">module.library</field>
+        <field name="arch" type="xml">
+            <search string="Module Libraries">
+                <field name="name"/>
+                <field name="repository_name"/>
+                <field name="github_repository_id"/>
+                
+                <filter string="Auto Sync Enabled" name="auto_sync" domain="[('auto_sync', '=', True)]"/>
+                <filter string="Has Modules" name="has_modules" domain="[('module_count', '>', 0)]"/>
+                
+                <separator/>
+                <filter string="Sync Success" name="sync_success" domain="[('sync_status', '=', 'success')]"/>
+                <filter string="Sync Error" name="sync_error" domain="[('sync_status', '=', 'error')]"/>
+                <filter string="Never Synced" name="never_synced" domain="[('sync_status', '=', 'never')]"/>
+                
+                <group expand="0" string="Group By">
+                    <filter string="Sync Status" name="group_sync_status" context="{'group_by': 'sync_status'}"/>
+                    <filter string="Auto Sync" name="group_auto_sync" context="{'group_by': 'auto_sync'}"/>
+                    <filter string="Sync Frequency" name="group_frequency" context="{'group_by': 'sync_frequency'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <!-- Module Library Kanban View -->
+    <record id="view_module_library_kanban" model="ir.ui.view">
+        <field name="name">module.library.kanban</field>
+        <field name="model">module.library</field>
+        <field name="arch" type="xml">
+            <kanban class="o_kanban_mobile">
+                <field name="name"/>
+                <field name="repository_name"/>
+                <field name="module_count"/>
+                <field name="auto_sync"/>
+                <field name="sync_status"/>
+                <field name="last_sync"/>
+                <templates>
+                    <t t-name="kanban-box">
+                        <div class="oe_kanban_card oe_kanban_global_click">
+                            <div class="o_kanban_record_top">
+                                <div class="o_kanban_record_headings">
+                                    <strong class="o_kanban_record_title">
+                                        <field name="name"/>
+                                    </strong>
+                                    <small class="o_kanban_record_subtitle text-muted">
+                                        <field name="repository_name"/>
+                                    </small>
+                                </div>
+                                <div class="o_kanban_record_top_right">
+                                    <span t-if="record.sync_status.raw_value == 'success'" class="badge badge-success">✓</span>
+                                    <span t-if="record.sync_status.raw_value == 'error'" class="badge badge-danger">✗</span>
+                                    <span t-if="record.sync_status.raw_value == 'pending'" class="badge badge-warning">⏳</span>
+                                    <span t-if="record.sync_status.raw_value == 'never'" class="badge badge-secondary">-</span>
+                                </div>
+                            </div>
+                            <div class="o_kanban_record_body">
+                                <div class="text-muted">
+                                    <i class="fa fa-cubes"/> <field name="module_count"/> modules
+                                </div>
+                                <div class="text-muted" t-if="record.auto_sync.raw_value">
+                                    <i class="fa fa-refresh"/> Auto sync enabled
+                                </div>
+                                <div class="text-muted" t-if="record.last_sync.raw_value">
+                                    Last sync: <field name="last_sync"/>
+                                </div>
+                            </div>
+                            <div class="o_kanban_record_bottom">
+                                <div class="oe_kanban_bottom_left">
+                                    <button name="action_sync_repository" type="object" class="btn btn-primary btn-sm">
+                                        <i class="fa fa-refresh"/> Sync
+                                    </button>
+                                </div>
+                                <div class="oe_kanban_bottom_right">
+                                    <button name="action_view_modules" type="object" class="btn btn-secondary btn-sm">
+                                        <i class="fa fa-cubes"/> Modules
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </t>
+                </templates>
+            </kanban>
+        </field>
+    </record>
+
+    <!-- Module Library Action -->
+    <record id="action_module_library" model="ir.actions.act_window">
+        <field name="name">Module Libraries</field>
+        <field name="res_model">module.library</field>
+        <field name="view_mode">kanban,list,form</field>
+        <field name="context">{}</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                No module libraries found!
+            </p>
+            <p>
+                Mark GitHub repositories as "Odoo Module Repository" to create module libraries and sync them to discover modules.
+            </p>
+        </field>
+    </record>
+</odoo>

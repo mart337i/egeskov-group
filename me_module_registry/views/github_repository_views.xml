@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Inherit GitHub Repository Form View -->
+    <record id="view_github_repository_form_inherit" model="ir.ui.view">
+        <field name="name">github.repository.form.inherit</field>
+        <field name="model">github.repository</field>
+        <field name="inherit_id" ref="github_integration.view_github_repository_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//div[@name='button_box']" position="inside">
+                <button name="action_view_modules" type="object" class="oe_stat_button" icon="fa-cubes" invisible="module_count == 0">
+                    <field name="module_count" widget="statinfo" string="Modules"/>
+                </button>
+                <button name="action_sync_modules" type="object" class="oe_stat_button" icon="fa-refresh" invisible="odoo_module_repo == False">
+                    <div class="o_field_widget o_stat_info">
+                        <span class="o_stat_text">Sync Modules</span>
+                    </div>
+                </button>
+                <button name="action_mark_as_module_repo" type="object" class="oe_stat_button" icon="fa-plus" invisible="odoo_module_repo == True">
+                    <div class="o_field_widget o_stat_info">
+                        <span class="o_stat_text">Mark as Module Repo</span>
+                    </div>
+                </button>
+            </xpath>
+            
+            <xpath expr="//group[@name='repository_info']" position="after">
+                <group string="Module Information" name="module_info">
+                    <field name="odoo_module_repo"/>
+                    <field name="module_count"/>
+                    <button name="action_mark_as_module_repo" type="object" string="Mark as Module Repository" class="btn-success" invisible="odoo_module_repo == True" icon="fa-plus"/>
+                    <button name="action_unmark_as_module_repo" type="object" string="Unmark as Module Repository" class="btn-warning" invisible="odoo_module_repo == True" icon="fa-minus" confirm="This will remove all modules from this repository from the registry and library. Are you sure?"/>
+                </group>
+            </xpath>
+        </field>
+    </record>
+
+    <!-- Inherit GitHub Repository list View -->
+    <record id="view_github_repository_list_inherit" model="ir.ui.view">
+        <field name="name">github.repository.list.inherit</field>
+        <field name="model">github.repository</field>
+        <field name="inherit_id" ref="github_integration.view_github_repository_list"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='language']" position="after">
+                <field name="odoo_module_repo"/>
+                <field name="module_count"/>
+            </xpath>
+        </field>
+    </record>
+</odoo>

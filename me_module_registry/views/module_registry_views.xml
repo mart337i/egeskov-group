@@ -1,0 +1,114 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Module Registry list View -->
+    <record id="view_module_registry_list" model="ir.ui.view">
+        <field name="name">module.registry.list</field>
+        <field name="model">module.registry</field>
+        <field name="arch" type="xml">
+            <list string="Module Registry" decoration-success="sync_status=='success'" decoration-danger="sync_status=='error'" decoration-muted="sync_status=='pending'">
+                <field name="name"/>
+                <field name="technical_name"/>
+                <field name="version"/>
+                <field name="odoo_version_id"/>
+                <field name="github_repository_id"/>
+                <field name="library_id"/>
+                <field name="category"/>
+                <field name="author"/>
+                <field name="sync_status"/>
+            </list>
+        </field>
+    </record>
+    <record id="view_module_registry_search" model="ir.ui.view">
+        <field name="name">module.registry.search</field>
+        <field name="model">module.registry</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="name"/>
+                <field name="technical_name"/>
+                <field name="author"/>
+                <field name="category"/>
+                
+                <filter string="Installable" name="installable" domain="[('installable', '=', True)]"/>
+                <filter string="Applications" name="applications" domain="[('application', '=', True)]"/>
+                <filter string="Auto Install" name="auto_install" domain="[('auto_install', '=', True)]"/>
+                
+                <separator/>
+                <filter string="Sync Success" name="sync_success" domain="[('sync_status', '=', 'success')]"/>
+                <filter string="Sync Error" name="sync_error" domain="[('sync_status', '=', 'error')]"/>
+                <filter string="Pending Sync" name="sync_pending" domain="[('sync_status', '=', 'pending')]"/>
+                
+                <group expand="0" string="Group By">
+                    <filter string="Library" name="group_library" context="{'group_by': 'library_id'}"/>
+                    <filter string="Repository" name="group_repository" context="{'group_by': 'github_repository_id'}"/>
+                    <filter string="Category" name="group_category" context="{'group_by': 'category'}"/>
+                    <filter string="Author" name="group_author" context="{'group_by': 'author'}"/>
+                    <filter string="Odoo Version" name="group_odoo_version" context="{'group_by': 'odoo_version_id'}"/>
+                    <filter string="Sync Status" name="group_sync_status" context="{'group_by': 'sync_status'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+    <!-- Module Registry Kanban View -->
+    <record id="view_module_registry_kanban" model="ir.ui.view">
+        <field name="name">module.registry.kanban</field>
+        <field name="model">module.registry</field>
+        <field name="arch" type="xml">
+            <kanban class="o_kanban_mobile">
+                <field name="name"/>
+                <field name="technical_name"/>
+                <field name="version"/>
+                <field name="github_repository_id"/>
+                <field name="sync_status"/>
+                <field name="installable"/>
+                <field name="application"/>
+                <templates>
+                    <t t-name="kanban-box">
+                        <div class="oe_kanban_card oe_kanban_global_click">
+                            <div class="o_kanban_record_top">
+                                <div class="o_kanban_record_headings">
+                                    <strong class="o_kanban_record_title">
+                                        <field name="name"/>
+                                    </strong>
+                                    <small class="o_kanban_record_subtitle text-muted">
+                                        <field name="technical_name"/>
+                                    </small>
+                                </div>
+                                <div class="o_kanban_record_top_right">
+                                    <span t-if="record.sync_status.raw_value == 'success'" class="badge badge-success">✓</span>
+                                    <span t-if="record.sync_status.raw_value == 'error'" class="badge badge-danger">✗</span>
+                                    <span t-if="record.sync_status.raw_value == 'pending'" class="badge badge-warning">⏳</span>
+                                </div>
+                            </div>
+                            <div class="o_kanban_record_body">
+                                <field name="github_repository_id"/>
+                                <div class="text-muted">
+                                    Version: <field name="version"/>
+                                </div>
+                                <div class="mt8">
+                                    <span t-if="record.installable.raw_value" class="badge badge-info">Installable</span>
+                                    <span t-if="record.application.raw_value" class="badge badge-primary">App</span>
+                                </div>
+                            </div>
+                        </div>
+                    </t>
+                </templates>
+            </kanban>
+        </field>
+    </record>
+
+    <!-- Module Registry Action -->
+    <record id="action_module_registry" model="ir.actions.act_window">
+        <field name="name">Module Registry</field>
+        <field name="res_model">module.registry</field>
+        <field name="view_mode">kanban,list,form</field>
+        <field name="context">{}</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                No modules found in the registry!
+            </p>
+            <p>
+                Sync modules from your GitHub repositories to populate the registry.
+            </p>
+        </field>
+    </record>
+</odoo>

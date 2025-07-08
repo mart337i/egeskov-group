@@ -36,7 +36,7 @@ Requirements:
 * Python cryptography library
 * Network access to monitored domains
     """,
-    'author': 'Certificate Monitor',
+    'author': 'Egeskov-group',
     'website': 'https://github.com/cert-monitor',
     'license': 'LGPL-3',
     'depends': ['base', 'web'],

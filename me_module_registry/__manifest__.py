@@ -29,9 +29,9 @@
     'data': [
         'security/ir.model.access.csv',
         'data/ir_cron.xml',
+        'views/github_repository_views.xml',
         'views/module_registry_views.xml',
         'views/module_library_views.xml',
-        'views/github_repository_views.xml',
         'views/menu_views.xml',
     ],
     # only loaded in demonstration mode

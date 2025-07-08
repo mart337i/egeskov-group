@@ -8,17 +8,23 @@
             <list string="Module Registry">
                 <field name="name"/>
                 <field name="version"/>
+                <field name="version_status"/>
                 <field name="odoo_version_id"/>
                 <field name="category"/>
                 <field name="author"/>
                 <field name="github_repository_id"/>
                 <field name="installable"/>
                 <field name="application"/>
+                <field name="is_latest_version"/>
+                <field name="version_family_count"/>
                 <!-- Technical fields only in debug mode -->
                 <field name="technical_name" groups="base.group_no_one"/>
+                <field name="major_version" groups="base.group_no_one"/>
                 <field name="library_id" groups="base.group_no_one"/>
                 <field name="sync_status" groups="base.group_no_one"/>
                 <field name="last_sync" groups="base.group_no_one"/>
+                <field name="has_newer_version" groups="base.group_no_one"/>
+                <field name="newer_versions_count" groups="base.group_no_one"/>
             </list>
         </field>
     </record>
@@ -41,12 +47,21 @@
                 <filter string="Sync Error" name="sync_error" domain="[('sync_status', '=', 'error')]"/>
                 <filter string="Pending Sync" name="sync_pending" domain="[('sync_status', '=', 'pending')]"/>
                 
+                <separator/>
+                <filter string="Latest Version" name="latest_version" domain="[('is_latest_version', '=', True)]"/>
+                <filter string="Has Newer Version" name="has_newer" domain="[('has_newer_version', '=', True)]"/>
+                <filter string="Active" name="active_status" domain="[('version_status', '=', 'active')]"/>
+                <filter string="Deprecated" name="deprecated_status" domain="[('version_status', '=', 'deprecated')]"/>
+                <filter string="Migration Needed" name="migration_needed" domain="[('version_status', '=', 'migration_needed')]"/>
+                
                 <group expand="0" string="Group By">
                     <filter string="Library" name="group_library" context="{'group_by': 'library_id'}"/>
                     <filter string="Repository" name="group_repository" context="{'group_by': 'github_repository_id'}"/>
                     <filter string="Category" name="group_category" context="{'group_by': 'category'}"/>
                     <filter string="Author" name="group_author" context="{'group_by': 'author'}"/>
                     <filter string="Odoo Version" name="group_odoo_version" context="{'group_by': 'odoo_version_id'}"/>
+                    <filter string="Version Status" name="group_version_status" context="{'group_by': 'version_status'}"/>
+                    <filter string="Major Version" name="group_major_version" context="{'group_by': 'major_version'}"/>
                     <filter string="Sync Status" name="group_sync_status" context="{'group_by': 'sync_status'}"/>
                 </group>
             </search>
@@ -61,12 +76,16 @@
                 <field name="name"/>
                 <field name="technical_name"/>
                 <field name="version"/>
+                <field name="version_status"/>
                 <field name="github_repository_id"/>
                 <field name="sync_status"/>
                 <field name="installable"/>
                 <field name="application"/>
                 <field name="category"/>
                 <field name="author"/>
+                <field name="is_latest_version"/>
+                <field name="has_newer_version"/>
+                <field name="version_family_count"/>
                 <templates>
                     <t t-name="kanban-box">
                         <div class="oe_kanban_card oe_kanban_global_click" style="border-left: 3px solid #e9ecef;">
@@ -82,6 +101,10 @@
                                 <div class="o_kanban_record_top_right">
                                     <span t-if="record.application.raw_value" class="text-primary" title="Application">📱</span>
                                     <span t-if="!record.installable.raw_value" class="text-muted" title="Not Installable">⚠️</span>
+                                    <span t-if="record.is_latest_version.raw_value" class="text-success" title="Latest Version">✓</span>
+                                    <span t-if="record.has_newer_version.raw_value" class="text-warning" title="Has Newer Version">🔄</span>
+                                    <span t-if="record.version_status.raw_value == 'deprecated'" class="text-warning" title="Deprecated">⚠️</span>
+                                    <span t-if="record.version_status.raw_value == 'obsolete'" class="text-danger" title="Obsolete">❌</span>
                                 </div>
                             </div>
                             <div class="o_kanban_record_body">
@@ -90,6 +113,9 @@
                                 </div>
                                 <div t-if="record.author.raw_value" class="text-muted small">
                                     by <field name="author"/>
+                                </div>
+                                <div t-if="record.version_family_count.raw_value > 1" class="text-info small">
+                                    <field name="version_family_count"/> versions available
                                 </div>
                             </div>
                         </div>
@@ -109,6 +135,9 @@
                     <button name="action_sync_from_github" type="object" string="Sync from GitHub" class="btn-primary" groups="base.group_no_one"/>
                     <button name="action_open_github" type="object" string="View on GitHub" class="btn-secondary"/>
                     <button name="action_open_manifest" type="object" string="View Manifest" class="btn-secondary" groups="base.group_no_one"/>
+                    <button name="action_view_all_versions" type="object" string="All Versions" class="btn-secondary"/>
+                    <button name="action_mark_deprecated" type="object" string="Mark Deprecated" class="btn-warning" groups="base.group_no_one" invisible="version_status == 'deprecated'"/>
+                    <button name="action_mark_obsolete" type="object" string="Mark Obsolete" class="btn-danger" groups="base.group_no_one" invisible="version_status == 'obsolete'"/>
                 </header>
                 <sheet>
                     <div class="oe_title">
@@ -116,64 +145,93 @@
                             <field name="name" placeholder="Module Name"/>
                         </h1>
                         <h3>
-                            <field name="version" placeholder="Version"/> for Odoo <field name="odoo_version_id" placeholder="Odoo Version"/>
+                            <field name="version" placeholder="Version"/> for <field name="odoo_version_id" placeholder="Odoo Version"/>
                         </h3>
                     </div>
                     
                     <group>
-                        <group string="Basic Information">
+                        <group string="Module Information (from GitHub)">
                             <field name="category"/>
                             <field name="author"/>
                             <field name="website" widget="url"/>
                             <field name="license"/>
                             <field name="github_repository_id"/>
                         </group>
-                        <group string="Module Properties">
+                        <group string="Module Properties (from GitHub)">
                             <field name="installable"/>
                             <field name="application"/>
                             <field name="auto_install"/>
                         </group>
                     </group>
                     
+                    <group string="Version Management (Editable)">
+                        <group>
+                            <field name="version_status"/>
+                            <field name="deprecation_date" invisible="version_status != 'deprecated'"/>
+                            <field name="end_of_life_date" invisible="version_status != 'obsolete'"/>
+                        </group>
+                        <group string="Version Analysis (Computed)">
+                            <field name="major_version"/>
+                            <field name="is_latest_version"/>
+                            <field name="version_family_count"/>
+                            <field name="has_newer_version" groups="base.group_no_one"/>
+                            <field name="newer_versions_count" groups="base.group_no_one"/>
+                        </group>
+                    </group>
+                    
                     <notebook>
-                        <page string="Description">
+                        <page string="Description (from GitHub)">
                             <field name="summary" placeholder="Short summary..."/>
                             <field name="description" widget="html"/>
                         </page>
                         
-                        <page string="Technical Details" groups="base.group_no_one">
+                        <page string="Version Management">
+                            <group string="All Versions" invisible="version_family_count &lt;= 1">
+                                <field name="all_versions_ids" nolabel="1">
+                                    <list>
+                                        <field name="version"/>
+                                        <field name="version_status"/>
+                                        <field name="is_latest_version"/>
+                                        <field name="deprecation_date"/>
+                                        <field name="end_of_life_date"/>
+                                    </list>
+                                </field>
+                            </group>
+                        </page>
+                        
+                        <page string="Technical Details (GitHub Data)" groups="base.group_no_one">
                             <group>
-                                <group string="Technical Information">
+                                <group string="Repository Information">
                                     <field name="technical_name"/>
                                     <field name="library_id"/>
                                     <field name="github_path"/>
                                     <field name="full_name"/>
                                     <field name="github_url" widget="url"/>
                                 </group>
-                                <group string="Sync Information">
+                                <group string="Sync Status">
                                     <field name="sync_status"/>
                                     <field name="last_sync"/>
                                     <field name="sync_error" invisible="sync_status != 'error'"/>
                                 </group>
                             </group>
                             
-                            <group string="Dependencies">
+                            <group string="Dependencies (from manifest)">
                                 <field name="depends" widget="text"/>
                                 <field name="external_dependencies" widget="text"/>
                             </group>
                             
-                            <group string="Files and Assets">
+                            <group string="Files and Assets (from manifest)">
                                 <field name="data_files" widget="text"/>
                                 <field name="demo_files" widget="text"/>
                                 <field name="assets" widget="text"/>
                             </group>
                             
-                            <group string="URLs">
+                            <group string="GitHub URLs">
                                 <field name="manifest_url" widget="url"/>
                                 <field name="readme_url" widget="url"/>
                             </group>
                             
-                            <group string="Raw Manifest Data">
+                            <group string="Raw Manifest Data (JSON)">
                                 <field name="manifest_data" widget="text"/>
                             </group>
                         </page>

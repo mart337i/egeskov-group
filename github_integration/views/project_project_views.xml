@@ -9,25 +9,36 @@
             <xpath expr="//field[@name='sequence']" position="after">
                 <field name="is_software_project"/>
                 <field name="github_repo_url"/>
+                <field name="github_repository_ids"/>
+                <field name="repository_count"/>
                 <field name="last_deployment_status"/>
                 <field name="last_deployment_date"/>
                 <field name="last_commit_sha"/>
+                <field name="last_commit_message"/>
             </xpath>
             
             <!-- Add GitHub integration to footer -->
             <xpath expr="//footer/div[@class='d-flex ms-auto align-items-center']" position="inside">
                 <div class="github_integration_kanban me-2" t-if="record.is_software_project.raw_value">
-                    <div class="d-flex align-items-center gap-2">
+                    <div class="d-flex align-items-center gap-2 flex-wrap">
                         <!-- Software Project Indicator -->
                         <span class="badge badge-info" title="Software Project">
                             <i class="fa fa-code me-1"></i>Dev
+                        </span>
+                        
+                        <!-- Repository Count -->
+                        <span t-if="record.repository_count.raw_value > 1" 
+                              class="badge badge-primary" 
+                              t-att-title="'Multiple repositories: ' + record.repository_count.value">
+                            <i class="fa fa-database me-1"/>
+                            <t t-esc="record.repository_count.value"/> repos
                         </span>
                         
                         <!-- Deployment Status Badge -->
                         <span t-if="record.last_deployment_status.raw_value and record.last_deployment_status.raw_value != 'unknown'" 
                               class="badge badge-sm deployment-status" 
                               t-attf-class="deployment-#{record.last_deployment_status.raw_value}"
-                              t-att-title="record.last_deployment_date.value">
+                              t-att-title="'Last deployment: ' + record.last_deployment_date.value">
                             <i class="fa fa-rocket me-1"/>
                             <t t-esc="record.last_deployment_status.value"/>
                         </span>
@@ -35,7 +46,7 @@
                         <!-- Commit Indicator -->
                         <span t-if="record.last_commit_sha.raw_value" 
                               class="badge badge-secondary" 
-                              title="Latest Commit">
+                              t-att-title="'Latest commit: ' + record.last_commit_message.value">
                             <i class="fa fa-git-commit me-1"/>
                             <t t-esc="record.last_commit_sha.value"/>
                         </span>
@@ -45,7 +56,7 @@
                            t-attf-href="#{record.github_repo_url.raw_value}" 
                            target="_blank" 
                            class="btn btn-sm btn-outline-dark github-link"
-                           title="Open GitHub Repository">
+                           title="Open Primary GitHub Repository">
                             <i class="fa fa-github"/>
                         </a>
                     </div>
@@ -59,11 +70,58 @@
         <field name="model">project.project</field>
         <field name="inherit_id" ref="project.edit_project"/>
         <field name="arch" type="xml">
+            <!-- Add GitHub buttons to header button box -->
+            <xpath expr="//div[hasclass('oe_button_box')]" position="inside">
+                <button name="action_refresh_github_branches" 
+                        type="object" 
+                        class="oe_stat_button" 
+                        icon="fa-code-fork"
+                        invisible="not is_software_project or not github_repository_ids">
+                    <div class="o_field_widget o_stat_info">
+                        <span class="o_stat_text">Refresh</span>
+                        <span class="o_stat_text">Branches</span>
+                    </div>
+                </button>
+                
+                <button name="action_add_repository" 
+                        type="object" 
+                        class="oe_stat_button" 
+                        icon="fa-plus"
+                        invisible="not is_software_project">
+                    <div class="o_field_widget o_stat_info">
+                        <span class="o_stat_text">Add</span>
+                        <span class="o_stat_text">Repository</span>
+                    </div>
+                </button>
+                
+                <button name="action_view_all_repositories" 
+                        type="object" 
+                        class="oe_stat_button" 
+                        icon="fa-github"
+                        invisible="not is_software_project or not github_repository_ids">
+                    <div class="o_field_widget o_stat_info">
+                        <span class="o_stat_text">View</span>
+                        <span class="o_stat_text">Repositories</span>
+                    </div>
+                </button>
+            </xpath>
+            
+            <!-- Add software project checkbox after partner_id -->
             <xpath expr="//field[@name='partner_id']" position="after">
                 <field name="is_software_project"/>
-                <field name="github_repository_id" invisible="is_software_project==False"
-                       domain="['|', ('organization_id.is_active', '=', True), ('starred_by_org_ids.is_active', '=', True)]"/>
-                <field name="github_repo_url" invisible="is_software_project==False"/>
+            </xpath>
+            
+            <!-- Add GitHub Integration page to existing notebook -->
+            <xpath expr="//notebook" position="inside">
+                <page string="GitHub Integration" name="github_integration" invisible="not is_software_project">
+                    <group string="GitHub Repositories">
+                        <field name="repository_count" readonly="1"/>
+                        <field name="all_repository_names" readonly="1"/>
+                        <field name="github_repository_ids" widget="many2many_tags" 
+                               domain="['|', ('organization_id.is_active', '=', True), ('starred_by_org_ids.is_active', '=', True)]"
+                               options="{'no_create': True}"/>
+                    </group>
+                </page>
             </xpath>
         </field>
     </record>

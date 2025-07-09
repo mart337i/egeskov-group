@@ -10,6 +10,16 @@
                 <field name="project_id" invisible="1"/>
                 <field name="github_branch_id"/>
             </xpath>
+            
+            <!-- Add GitHub branch indicator after task name -->
+            <xpath expr="//field[@name='name']" position="after">
+                <div class="github_task_kanban" t-if="record.github_branch_id.raw_value">
+                    <span class="badge badge-info" t-att-title="'GitHub Branch: ' + record.github_branch_id.value">
+                        <i class="fa fa-code-fork me-1"/>
+                        <t t-esc="record.github_branch_id.value"/>
+                    </span>
+                </div>
+            </xpath>
         </field>
     </record>
     
@@ -18,25 +28,13 @@
         <field name="model">project.task</field>
         <field name="inherit_id" ref="project.view_task_form2"/>
         <field name="arch" type="xml">
-            <!-- Add GitHub branch field below date_deadline -->
-            <xpath expr="//field[@name='partner_id']" position="after">
-                <label for="github_branch_id" string="GitHub Branch" invisible="not project_id.github_repository_id"/>
-                <div invisible="not project_id.github_repository_id">
-                    <field name="github_branch_id" 
-                           placeholder="Select a branch..."
-                           nolabel="1"
-                           domain="[('repository_id', '=', project_id.github_repository_id)]"
-                           options="{'no_create': True, 'no_edit': True}"/>
-                </div>
-            </xpath>
-            
             <!-- Add GitHub buttons to button box -->
             <xpath expr="//div[hasclass('oe_button_box')]" position="inside">
                 <button name="action_open_github_repo" 
                         type="object" 
                         class="oe_stat_button" 
                         icon="fa-github"
-                        invisible="not project_id.github_repository_id">
+                        invisible="not project_id.is_software_project or not project_id.github_repository_ids">
                     <div class="o_field_widget o_stat_info">
                         <span class="o_stat_text">GitHub</span>
                         <span class="o_stat_text">Repository</span>
@@ -47,12 +45,51 @@
                         type="object" 
                         class="oe_stat_button" 
                         icon="fa-code-fork"
-                        invisible="not github_branch_id or not project_id.github_repository_id">
+                        invisible="not github_branch_id or not project_id.is_software_project">
                     <div class="o_field_widget o_stat_info">
                         <span class="o_stat_text">GitHub</span>
                         <span class="o_stat_text">Branch</span>
                     </div>
                 </button>
+            </xpath>
+            
+            <!-- Add GitHub Integration as a separate page in notebook -->
+            <xpath expr="//notebook" position="inside">
+                <page string="GitHub Integration" name="github_integration" invisible="not project_id.is_software_project">
+                    <group>
+                        <group string="Branch Assignment">
+                            <field name="github_branch_id" 
+                                   placeholder="Select a branch..."
+                                   options="{'no_create': True, 'no_edit': True}"/>
+                            <div class="oe_inline">
+                                <button name="action_refresh_project_branches" 
+                                        type="object" 
+                                        string="Refresh Branches" 
+                                        class="btn-link oe_link"
+                                        icon="fa-refresh"/>
+                            </div>
+                        </group>
+                        
+                        <group string="Repository Information" invisible="not github_branch_id">
+                            <field name="github_repository_id" readonly="1" string="Repository"/>
+                            <field name="github_repository_url" readonly="1" string="Repository URL" widget="url"/>
+                            <field name="github_branch_name" readonly="1" string="Branch Name"/>
+                        </group>
+                    </group>
+                    
+                    <group string="Project Repositories" invisible="not project_id.is_software_project">
+                        <field name="project_repository_count" readonly="1" string="Repository Count"/>
+                        <field name="project_repository_names" readonly="1" string="Repositories"/>
+                        <div class="oe_inline">
+                            <button name="action_view_project_repositories" 
+                                    type="object" 
+                                    string="View All Repositories" 
+                                    class="btn-link oe_link"
+                                    icon="fa-github"
+                                    invisible="not project_has_repositories"/>
+                        </div>
+                    </group>
+                </page>
             </xpath>
         </field>
     </record>

@@ -15,11 +15,34 @@ class GitHubBranch(models.Model):
     repository_id = fields.Many2one('github.repository', string='Repository', required=True, ondelete='cascade')
     project_id = fields.Many2one('project.project', string='Project', ondelete='cascade')
     sha = fields.Char(string='SHA', help='Latest commit SHA for this branch')
+    last_commit_sha = fields.Char(string='Last Commit SHA', compute='_compute_last_commit_sha', store=True)
     is_default = fields.Boolean(string='Default Branch', default=False)
+    
+    # Computed fields for better display
+    display_name = fields.Char(string='Display Name', compute='_compute_display_name', store=True)
+    qualified_name = fields.Char(string='Qualified Name', compute='_compute_display_name', store=True)
     
     _sql_constraints = [
         ('unique_branch_repository', 'unique(name, repository_id)', 'Branch name must be unique per repository!')
     ]
+
+    @api.depends('name', 'repository_id.name')
+    def _compute_display_name(self):
+        for branch in self:
+            if branch.repository_id:
+                branch.qualified_name = f"{branch.repository_id.name}/{branch.name}"
+                branch.display_name = f"{branch.name} ({branch.repository_id.name})"
+            else:
+                branch.qualified_name = branch.name
+                branch.display_name = branch.name
+    
+    @api.depends('sha')
+    def _compute_last_commit_sha(self):
+        for branch in self:
+            if branch.sha:
+                branch.last_commit_sha = branch.sha[:7]  # Show short SHA
+            else:
+                branch.last_commit_sha = False
 
     @api.model
     def fetch_branches_for_repository(self, repository_id, github_token=None):

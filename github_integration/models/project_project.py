@@ -19,6 +19,16 @@ class ProjectProject(models.Model):
         help='Select GitHub repository for this project'
     )
     
+    # Multiple repositories support
+    github_repository_ids = fields.Many2many(
+        'github.repository',
+        'project_github_repository_rel',
+        'project_id',
+        'repository_id',
+        string='GitHub Repositories',
+        help='Multiple GitHub repositories for this project'
+    )
+    
     # Computed fields for backward compatibility
     github_repo_url = fields.Char(
         string='GitHub Repository URL',
@@ -61,6 +71,20 @@ class ProjectProject(models.Model):
     
     last_commit_message = fields.Text(
         string='Last Commit Message'
+    )
+    
+    # Multiple repositories computed fields
+    repository_count = fields.Integer(
+        string='Repository Count',
+        compute='_compute_repository_stats',
+        store=True
+    )
+    
+    all_repository_names = fields.Char(
+        string='All Repository Names',
+        compute='_compute_repository_stats',
+        store=True,
+        help='Comma-separated list of all repository names'
     )
     
     @api.onchange('github_repo_url')
@@ -110,12 +134,18 @@ class ProjectProject(models.Model):
                 project.github_owner = False
                 project.github_repo_name = False
 
+    @api.depends('github_repository_ids')
+    def _compute_repository_stats(self):
+        for project in self:
+            repositories = project.github_repository_ids
+            project.repository_count = len(repositories)
+            project.all_repository_names = ', '.join(repositories.mapped('name')) if repositories else ''
+
     @api.onchange('is_software_project')
     def _onchange_on_is_software_project(self):
         self.ensure_one()
         if self.is_software_project == False:
-            self.github_repo_url = False
-            self.github_repository_id = False
+            self.github_repository_ids = [(5, 0, 0)]  # Clear all repositories
     
     def action_refresh_github_status(self):
         """Refresh GitHub deployment status"""
@@ -129,10 +159,11 @@ class ProjectProject(models.Model):
                 _logger.warning("Skipping record ID %s - missing owner or repo name", record.id)
 
     def action_refresh_github_branches(self):
-        """Refresh GitHub branches"""
+        """Refresh GitHub branches for all repositories"""
         for record in self:
-            if record.is_software_project and record.github_repository_id:
-                self.env['github.branch'].fetch_branches_for_repository(record.github_repository_id.id)
+            if record.is_software_project and record.github_repository_ids:
+                for repo in record.github_repository_ids:
+                    self.env['github.branch'].fetch_branches_for_repository(repo.id)
 
     def _fetch_github_data(self):
         """Fetch latest deployment and commit data from GitHub API"""
@@ -246,3 +277,51 @@ class ProjectProject(models.Model):
             self.last_deployment_status = 'unknown'
         
         _logger.info("Finished fetching GitHub data for %s/%s", self.github_owner, self.github_repo_name)
+
+    def get_all_project_repositories(self):
+        """Get all repositories associated with this project"""
+        return self.github_repository_ids
+
+    def get_all_project_branches(self):
+        """Get all branches from all repositories associated with this project"""
+        all_repos = self.get_all_project_repositories()
+        all_branches = self.env['github.branch']
+        
+        for repo in all_repos:
+            repo_branches = self.env['github.branch'].search([
+                ('repository_id', '=', repo.id)
+            ])
+            all_branches |= repo_branches
+        
+        return all_branches
+
+    def action_add_repository(self):
+        """Action to add a repository to the project"""
+        return {
+            'name': 'Add Repository',
+            'type': 'ir.actions.act_window',
+            'res_model': 'github.repository',
+            'view_mode': 'list',
+            'target': 'new',
+            'domain': [
+                ('id', 'not in', self.github_repository_ids.ids),
+                '|', 
+                ('organization_id.is_active', '=', True), 
+                ('starred_by_org_ids.is_active', '=', True)
+            ],
+            'context': {
+                'search_default_group_by_organization': 1,
+                'project_id': self.id,
+            }
+        }
+
+    def action_view_all_repositories(self):
+        """View all repositories for this project"""
+        return {
+            'name': f'Repositories for {self.name}',
+            'type': 'ir.actions.act_window',
+            'res_model': 'github.repository',
+            'view_mode': 'list,form',
+            'domain': [('id', 'in', self.github_repository_ids.ids)],
+            'context': {'default_project_id': self.id}
+        }

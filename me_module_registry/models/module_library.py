@@ -28,18 +28,24 @@ class ModuleLibrary(models.Model):
         ('manual', 'Manual Only')
     ], string='Sync Frequency', default='manual', help='How often to sync this library')
     
-    # Modules in this library
-    module_ids = fields.One2many('module.registry', 'library_id', string='Modules')
+    # Templates and versions in this library
+    template_ids = fields.One2many('module.template', 'library_id', string='Module Templates')
+    version_ids = fields.One2many('module.registry', 'library_id', string='Module Versions')
+    module_ids = fields.One2many('module.registry', 'library_id', string='Module Versions')  # Same as version_ids for view compatibility
     
     # Computed fields
-    module_count = fields.Integer(string='Module Count', compute='_compute_module_count', store=True)
-    last_sync = fields.Datetime(string='Last Sync', compute='_compute_last_sync', store=True)
+    template_count = fields.Integer(string='Template Count', compute='_compute_counts', store=True)
+    version_count = fields.Integer(string='Version Count', compute='_compute_counts', store=True)
+    module_count = fields.Integer(string='Module Count', compute='_compute_counts', store=True)
+    active_version_count = fields.Integer(string='Active Versions', compute='_compute_counts', store=True)
+    last_sync = fields.Datetime(string='Last Sync', compute='_compute_sync_info', store=True)
     sync_status = fields.Selection([
         ('success', 'Success'),
         ('error', 'Error'),
         ('pending', 'Pending'),
         ('never', 'Never Synced')
-    ], string='Sync Status', compute='_compute_sync_status', store=True)
+    ], string='Sync Status', compute='_compute_sync_info', store=True)
+    supported_odoo_versions = fields.Char(string='Supported Odoo Versions', compute='_compute_counts', store=True)
     
     # Repository info (related fields for convenience)
     repository_name = fields.Char(string='Repository', related='github_repository_id.full_name', store=True)
@@ -50,31 +56,46 @@ class ModuleLibrary(models.Model):
          'Each repository can only have one library entry!'),
     ]
 
-    @api.depends('module_ids')
-    def _compute_module_count(self):
+    @api.depends('template_ids', 'version_ids', 'version_ids.version_status', 'version_ids.odoo_version_id')
+    def _compute_counts(self):
         for library in self:
-            library.module_count = len(library.module_ids)
+            library.template_count = len(library.template_ids)
+            library.version_count = len(library.version_ids)
+            library.module_count = len(library.template_ids)  # Module count = template count (unique modules)
+            
+            # Count active versions
+            active_versions = library.version_ids.filtered(lambda v: v.version_status == 'active')
+            library.active_version_count = len(active_versions)
+            
+            # Get supported Odoo versions
+            odoo_versions = library.version_ids.mapped('odoo_version_id.name')
+            library.supported_odoo_versions = ', '.join(sorted(set(odoo_versions))) if odoo_versions else ''
 
-    @api.depends('module_ids.last_sync')
-    def _compute_last_sync(self):
+    @api.depends('template_ids.last_sync', 'version_ids.last_sync')
+    def _compute_sync_info(self):
         for library in self:
-            if library.module_ids:
-                library.last_sync = max(library.module_ids.mapped('last_sync') or [fields.Datetime.now()])
+            all_sync_dates = []
+            all_sync_dates.extend(library.template_ids.mapped('last_sync'))
+            all_sync_dates.extend(library.version_ids.mapped('last_sync'))
+            
+            if all_sync_dates:
+                library.last_sync = max([d for d in all_sync_dates if d])
             else:
                 library.last_sync = False
-
-    @api.depends('module_ids.sync_status')
-    def _compute_sync_status(self):
-        for library in self:
-            if not library.module_ids:
+            
+            # Compute sync status
+            if not library.template_ids and not library.version_ids:
                 library.sync_status = 'never'
             else:
-                statuses = library.module_ids.mapped('sync_status')
-                if 'error' in statuses:
+                template_statuses = library.template_ids.mapped('sync_status')
+                version_statuses = library.version_ids.mapped('sync_status')
+                all_statuses = template_statuses + version_statuses
+                
+                if 'error' in all_statuses:
                     library.sync_status = 'error'
-                elif 'pending' in statuses:
+                elif 'pending' in all_statuses:
                     library.sync_status = 'pending'
-                elif all(status == 'success' for status in statuses):
+                elif all(status == 'success' for status in all_statuses):
                     library.sync_status = 'success'
                 else:
                     library.sync_status = 'pending'
@@ -142,16 +163,31 @@ class ModuleLibrary(models.Model):
             }
         }
 
-    def action_view_modules(self):
-        """View modules in this library"""
+    def action_view_templates(self):
+        """View module templates in this library"""
         return {
-            'name': _('Modules in %s') % self.name,
+            'name': _('Module Templates in %s') % self.name,
             'type': 'ir.actions.act_window',
-            'res_model': 'module.registry',
-            'view_mode': 'tree,form',
+            'res_model': 'module.template',
+            'view_mode': 'list,form',
             'domain': [('library_id', '=', self.id)],
             'context': {'default_library_id': self.id}
         }
+
+    def action_view_versions(self):
+        """View module versions in this library"""
+        return {
+            'name': _('Module Versions in %s') % self.name,
+            'type': 'ir.actions.act_window',
+            'res_model': 'module.registry',
+            'view_mode': 'list,form',
+            'domain': [('library_id', '=', self.id)],
+            'context': {'default_library_id': self.id}
+        }
+
+    def action_view_modules(self):
+        """View modules in this library (backward compatibility)"""
+        return self.action_view_templates()
 
     def action_open_repository(self):
         """Open repository on GitHub"""

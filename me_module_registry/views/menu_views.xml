@@ -6,15 +6,15 @@
               sequence="10"/>
     
     <menuitem id="menu_module_library" 
-              name="Module Library" 
+              name="Module Libraries" 
               parent="menu_module_registry_root" 
               action="action_module_library" 
               sequence="10"/>
-              
-    <menuitem id="menu_module_registry" 
-              name="Module Registry" 
-              parent="menu_module_registry_root" 
-              action="action_module_registry" 
-              sequence="20"/>
     
+    <menuitem id="menu_module_template" 
+              name="Module Templates" 
+              parent="menu_module_registry_root" 
+              action="action_module_template" 
+              sequence="15"/>
+              
 </odoo>

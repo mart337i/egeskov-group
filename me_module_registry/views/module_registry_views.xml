@@ -8,6 +8,7 @@
             <list string="Module Registry">
                 <field name="name"/>
                 <field name="version"/>
+                <field name="github_branch"/>
                 <field name="version_status"/>
                 <field name="odoo_version_id"/>
                 <field name="category"/>
@@ -55,6 +56,7 @@
                 <filter string="Migration Needed" name="migration_needed" domain="[('version_status', '=', 'migration_needed')]"/>
                 
                 <group expand="0" string="Group By">
+                    <filter string="Branch" name="group_branch" context="{'group_by': 'github_branch'}"/>
                     <filter string="Library" name="group_library" context="{'group_by': 'library_id'}"/>
                     <filter string="Repository" name="group_repository" context="{'group_by': 'github_repository_id'}"/>
                     <filter string="Category" name="group_category" context="{'group_by': 'category'}"/>
@@ -76,6 +78,7 @@
                 <field name="name"/>
                 <field name="technical_name"/>
                 <field name="version"/>
+                <field name="github_branch"/>
                 <field name="version_status"/>
                 <field name="github_repository_id"/>
                 <field name="sync_status"/>
@@ -95,7 +98,7 @@
                                         <field name="name"/>
                                     </strong>
                                     <small class="o_kanban_record_subtitle text-muted">
-                                        v<field name="version"/> • <field name="category"/>
+                                        v<field name="version"/> • <field name="github_branch"/> • <field name="category"/>
                                     </small>
                                 </div>
                                 <div class="o_kanban_record_top_right">
@@ -156,6 +159,7 @@
                             <field name="website" widget="url"/>
                             <field name="license"/>
                             <field name="github_repository_id"/>
+                            <field name="github_branch"/>
                         </group>
                         <group string="Module Properties (from GitHub)">
                             <field name="installable"/>
@@ -204,6 +208,7 @@
                                 <group string="Repository Information">
                                     <field name="technical_name"/>
                                     <field name="library_id"/>
+                                    <field name="github_branch"/>
                                     <field name="github_path"/>
                                     <field name="full_name"/>
                                     <field name="github_url" widget="url"/>
@@ -215,12 +220,23 @@
                                 </group>
                             </group>
                             
-                            <group string="Dependencies (from manifest)">
-                                <field name="depends" widget="text"/>
-                                <field name="external_dependencies" widget="text"/>
+                            <group string="Dependencies (formatted)">
+                                <field name="depends_formatted" widget="html" nolabel="1"/>
+                                <field name="external_dependencies_formatted" widget="html" nolabel="1"/>
                             </group>
                             
-                            <group string="Files and Assets (from manifest)">
+                            <group string="Files (formatted)">
+                                <field name="data_files_formatted" widget="html" nolabel="1"/>
+                                <field name="demo_files_formatted" widget="html" nolabel="1"/>
+                            </group>
+                            
+                            <group string="Assets (formatted)">
+                                <field name="assets_formatted" widget="text" nolabel="1"/>
+                            </group>
+                            
+                            <group string="Raw Data (JSON)" groups="base.group_no_one">
+                                <field name="depends" widget="text"/>
+                                <field name="external_dependencies" widget="text"/>
                                 <field name="data_files" widget="text"/>
                                 <field name="demo_files" widget="text"/>
                                 <field name="assets" widget="text"/>
@@ -232,7 +248,7 @@
                             </group>
                             
                             <group string="Raw Manifest Data (JSON)">
-                                <field name="manifest_data" widget="text"/>
+                                <field name="manifest_data_formatted" widget="text" nolabel="1"/>
                             </group>
                         </page>
                     </notebook>

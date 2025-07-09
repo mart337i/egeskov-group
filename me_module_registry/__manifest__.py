@@ -5,13 +5,27 @@
     'license': "OPL-1",
 
     'summary': """
-        Simple module registry for Odoo with GitHub integration
+        Module registry with template/variant structure and GitHub integration
         """,
 
     'description': """
         Module Registry for Odoo
         ===========================
         
+        This module provides a comprehensive registry system for Odoo modules with GitHub integration.
+        
+        Key Features:
+        - **Module Templates**: Static information that doesn't change between versions (name, description, category, author, etc.)
+        - **Module Versions**: Version-specific information for each branch/version (dependencies, manifest data, branch info)
+        - **GitHub Integration**: Automatic synchronization from GitHub repositories
+        - **Version Management**: Track module versions across different branches and Odoo versions
+        - **Library Organization**: Group modules by repository/library
+        
+        Structure:
+        - Module Templates contain static info shared across all versions
+        - Module Registry (versions) contain version-specific data from GitHub branches
+        - Each template can have multiple versions from different branches
+        - Automatic sync from GitHub repositories marked as Odoo module repositories
 
     """,
 
@@ -30,6 +44,7 @@
         'security/ir.model.access.csv',
         'data/ir_cron.xml',
         'views/github_repository_views.xml',
+        'views/module_template_views.xml',
         'views/module_registry_views.xml',
         'views/module_library_views.xml',
         'views/menu_views.xml',

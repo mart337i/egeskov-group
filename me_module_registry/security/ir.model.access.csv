@@ -1,4 +1,6 @@
 id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_module_template_user,module.template.user,model_module_template,base.group_user,1,0,0,0
+access_module_template_manager,module.template.manager,model_module_template,base.group_system,1,1,1,1
 access_module_registry_user,module.registry.user,model_module_registry,base.group_user,1,0,0,0
 access_module_registry_manager,module.registry.manager,model_module_registry,base.group_system,1,1,1,1
 access_module_library_user,module.library.user,model_module_library,base.group_user,1,0,0,0

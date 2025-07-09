@@ -1,0 +1,213 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Module Template List View -->
+    <record id="view_module_template_list" model="ir.ui.view">
+        <field name="name">module.template.list</field>
+        <field name="model">module.template</field>
+        <field name="arch" type="xml">
+            <list string="Module Templates">
+                <field name="name"/>
+                <field name="technical_name"/>
+                <field name="category"/>
+                <field name="author"/>
+                <field name="github_repository_id"/>
+                <field name="version_count"/>
+                <field name="active_versions_count"/>
+                <field name="supported_odoo_versions"/>
+                <field name="application"/>
+                <field name="latest_version_id"/>
+                <!-- Technical fields only in debug mode -->
+                <field name="library_id" groups="base.group_no_one"/>
+                <field name="sync_status" groups="base.group_no_one"/>
+                <field name="last_sync" groups="base.group_no_one"/>
+            </list>
+        </field>
+    </record>
+
+    <!-- Module Template Search View -->
+    <record id="view_module_template_search" model="ir.ui.view">
+        <field name="name">module.template.search</field>
+        <field name="model">module.template</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="name"/>
+                <field name="technical_name"/>
+                <field name="author"/>
+                <field name="category"/>
+                
+                <filter string="Applications" name="applications" domain="[('application', '=', True)]"/>
+                <filter string="Has Versions" name="has_versions" domain="[('version_count', '>', 0)]"/>
+                <filter string="Active Versions" name="active_versions" domain="[('active_versions_count', '>', 0)]"/>
+                
+                <separator/>
+                <filter string="Sync Success" name="sync_success" domain="[('sync_status', '=', 'success')]"/>
+                <filter string="Sync Error" name="sync_error" domain="[('sync_status', '=', 'error')]"/>
+                <filter string="Pending Sync" name="sync_pending" domain="[('sync_status', '=', 'pending')]"/>
+                
+                <group expand="0" string="Group By">
+                    <filter string="Repository" name="group_repository" context="{'group_by': 'github_repository_id'}"/>
+                    <filter string="Library" name="group_library" context="{'group_by': 'library_id'}"/>
+                    <filter string="Category" name="group_category" context="{'group_by': 'category'}"/>
+                    <filter string="Author" name="group_author" context="{'group_by': 'author'}"/>
+                    <filter string="Sync Status" name="group_sync_status" context="{'group_by': 'sync_status'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <!-- Module Template Kanban View -->
+    <record id="view_module_template_kanban" model="ir.ui.view">
+        <field name="name">module.template.kanban</field>
+        <field name="model">module.template</field>
+        <field name="arch" type="xml">
+            <kanban class="o_kanban_mobile">
+                <field name="name"/>
+                <field name="technical_name"/>
+                <field name="category"/>
+                <field name="author"/>
+                <field name="github_repository_id"/>
+                <field name="version_count"/>
+                <field name="active_versions_count"/>
+                <field name="supported_odoo_versions"/>
+                <field name="application"/>
+                <field name="sync_status"/>
+                <templates>
+                    <t t-name="kanban-box">
+                        <div class="oe_kanban_card oe_kanban_global_click" style="border-left: 3px solid #007cba;">
+                            <div class="o_kanban_record_top">
+                                <div class="o_kanban_record_headings">
+                                    <strong class="o_kanban_record_title">
+                                        <field name="name"/>
+                                    </strong>
+                                    <small class="o_kanban_record_subtitle text-muted">
+                                        <field name="category"/> • <field name="supported_odoo_versions"/>
+                                    </small>
+                                </div>
+                                <div class="o_kanban_record_top_right">
+                                    <span t-if="record.application.raw_value" class="text-primary" title="Application">📱</span>
+                                    <span t-if="record.sync_status.raw_value == 'success'" class="text-success" title="Sync Success">✓</span>
+                                    <span t-if="record.sync_status.raw_value == 'error'" class="text-danger" title="Sync Error">❌</span>
+                                    <span t-if="record.sync_status.raw_value == 'pending'" class="text-warning" title="Sync Pending">⏳</span>
+                                </div>
+                            </div>
+                            <div class="o_kanban_record_body">
+                                <div class="text-muted mb-2">
+                                    <field name="github_repository_id"/>
+                                </div>
+                                <div t-if="record.author.raw_value" class="text-muted small">
+                                    by <field name="author"/>
+                                </div>
+                                <div class="text-info small">
+                                    <field name="version_count"/> versions (<field name="active_versions_count"/> active)
+                                </div>
+                            </div>
+                        </div>
+                    </t>
+                </templates>
+            </kanban>
+        </field>
+    </record>
+
+    <!-- Module Template Form View -->
+    <record id="view_module_template_form" model="ir.ui.view">
+        <field name="name">module.template.form</field>
+        <field name="model">module.template</field>
+        <field name="arch" type="xml">
+            <form string="Module Template">
+                <header>
+                    <button name="action_open_github" type="object" string="View on GitHub" class="btn-secondary"/>
+                    <button name="action_view_versions" type="object" string="View Versions" class="btn-primary"/>
+                </header>
+                <sheet>
+                    <div class="oe_title">
+                        <h1>
+                            <field name="name" placeholder="Module Name"/>
+                        </h1>
+                        <h3>
+                            <field name="technical_name" placeholder="Technical Name"/>
+                        </h3>
+                    </div>
+                    
+                    <group>
+                        <group string="Module Information (Static)">
+                            <field name="category"/>
+                            <field name="author"/>
+                            <field name="website" widget="url"/>
+                            <field name="license"/>
+                            <field name="application"/>
+                        </group>
+                        <group string="Repository Information">
+                            <field name="github_repository_id"/>
+                            <field name="library_id"/>
+                            <field name="github_path"/>
+                            <field name="github_url" widget="url"/>
+                        </group>
+                    </group>
+                    
+                    <group string="Version Statistics">
+                        <group>
+                            <field name="version_count"/>
+                            <field name="active_versions_count"/>
+                            <field name="latest_version_id"/>
+                        </group>
+                        <group>
+                            <field name="supported_odoo_versions"/>
+                            <field name="full_name"/>
+                        </group>
+                    </group>
+                    
+                    <notebook>
+                        <page string="Description">
+                            <field name="summary" placeholder="Short summary..."/>
+                            <field name="description" widget="html"/>
+                        </page>
+                        
+                        <page string="Versions">
+                            <field name="version_ids" nolabel="1">
+                                <list>
+                                    <field name="version"/>
+                                    <field name="odoo_version_id"/>
+                                    <field name="github_branch"/>
+                                    <field name="version_status"/>
+                                    <field name="installable"/>
+                                    <field name="is_latest_version"/>
+                                    <field name="last_sync"/>
+                                </list>
+                            </field>
+                        </page>
+                        
+                        <page string="Technical Details" groups="base.group_no_one">
+                            <group>
+                                <group string="Sync Status">
+                                    <field name="sync_status"/>
+                                    <field name="last_sync"/>
+                                    <field name="sync_error" invisible="sync_status != 'error'"/>
+                                </group>
+                                <group string="Sequence">
+                                    <field name="sequence"/>
+                                </group>
+                            </group>
+                        </page>
+                    </notebook>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <!-- Module Template Action -->
+    <record id="action_module_template" model="ir.actions.act_window">
+        <field name="name">Module Templates</field>
+        <field name="res_model">module.template</field>
+        <field name="view_mode">kanban,list,form</field>
+        <field name="context">{}</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                No module templates found!
+            </p>
+            <p>
+                Module templates contain static information about modules that doesn't change between versions.
+                They are automatically created when syncing modules from GitHub repositories.
+            </p>
+        </field>
+    </record>
+</odoo>

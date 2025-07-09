@@ -17,17 +17,18 @@ class ModuleRegistry(models.Model):
     _order = 'template_id, version desc'
 
     # Link to template (static information)
-    template_id = fields.Many2one('module.template', string='Module Template', required=True, ondelete='cascade', index=True)
+    template_id = fields.Many2one('module.template', 'Module Template', 
+                                required=True, ondelete='cascade', index=True)
     
-    # Version-specific information (from GitHub API - readonly)
+    # Version-specific information
     sequence = fields.Integer('Sequence')
-    version = fields.Char(string='Module Version', required=True, readonly=True, help='Version from GitHub manifest', index=True)
-    odoo_version_id = fields.Many2one('odoo.version', string='Odoo Version', readonly=True, help='Extracted from version in GitHub manifest')
+    version = fields.Char('Module Version', required=True, readonly=True, index=True)
+    odoo_version_id = fields.Many2one('odoo.version', 'Odoo Version', readonly=True)
     
-    # Version tracking and lifecycle management (editable)
-    major_version = fields.Char(string='Major Version', compute='_compute_version_parts', store=True, index=True)
-    minor_version = fields.Char(string='Minor Version', compute='_compute_version_parts', store=True)
-    patch_version = fields.Char(string='Patch Version', compute='_compute_version_parts', store=True)
+    # Version tracking and lifecycle management
+    major_version = fields.Char('Major Version', compute='_compute_version_parts', store=True, index=True)
+    minor_version = fields.Char('Minor Version', compute='_compute_version_parts', store=True)
+    patch_version = fields.Char('Patch Version', compute='_compute_version_parts', store=True)
     version_status = fields.Selection([
         ('active', 'Active'),
         ('deprecated', 'Deprecated'),
@@ -35,35 +36,37 @@ class ModuleRegistry(models.Model):
         ('migration_needed', 'Migration Needed'),
         ('beta', 'Beta'),
         ('alpha', 'Alpha')
-    ], string='Version Status', default='active', help='Status of this module version')
-    deprecation_date = fields.Date(string='Deprecation Date', help='Date when this version was deprecated')
-    end_of_life_date = fields.Date(string='End of Life Date', help='Date when support ends for this version')
+    ], 'Version Status', default='active')
+    deprecation_date = fields.Date('Deprecation Date')
+    end_of_life_date = fields.Date('End of Life Date')
     
-    # Version-specific manifest data (from GitHub manifest - readonly)
-    manifest_data = fields.Json(string='Full Manifest Data', readonly=True, help='Complete manifest from GitHub')
+    # Version-specific manifest data
+    manifest_data = fields.Json('Full Manifest Data', readonly=True)
     
-    # Module status and compatibility (version-specific, from GitHub manifest - readonly)
-    installable = fields.Boolean(string='Installable', default=True, readonly=True, help='From GitHub manifest')
-    auto_install = fields.Boolean(string='Auto Install', default=False, readonly=True, help='From GitHub manifest')
+    # Module status and compatibility
+    installable = fields.Boolean('Installable', default=True, readonly=True)
+    auto_install = fields.Boolean('Auto Install', default=False, readonly=True)
     
-    # GitHub integration (readonly - managed by system)
-    github_repository_id = fields.Many2one('github.repository', string='GitHub Repository', related='template_id.github_repository_id', store=True, readonly=True)
-    library_id = fields.Many2one('module.library', string='Module Library', related='template_id.library_id', store=True, readonly=True)
-    github_branch = fields.Char(string='GitHub Branch', readonly=True, help='Branch where this module version is found')
-    manifest_url = fields.Char(string='Manifest URL', readonly=True, help='Direct URL to __manifest__.py file')
-    readme_url = fields.Char(string='README URL', readonly=True, help='Direct URL to README file')
+    # GitHub integration
+    github_repository_id = fields.Many2one('github.repository', 'GitHub Repository', 
+                                         related='template_id.github_repository_id', store=True, readonly=True)
+    library_id = fields.Many2one('module.library', 'Module Library', 
+                               related='template_id.library_id', store=True, readonly=True)
+    github_branch = fields.Char('GitHub Branch', readonly=True)
+    manifest_url = fields.Char('Manifest URL', readonly=True)
+    readme_url = fields.Char('README URL', readonly=True)
     
-    # Template-related computed fields (for easy access)
-    name = fields.Char(string='Module Name', related='template_id.name', readonly=True)
-    technical_name = fields.Char(string='Technical Name', related='template_id.technical_name', readonly=True)
-    summary = fields.Text(string='Summary', related='template_id.summary', readonly=True)
-    description = fields.Html(string='Description', related='template_id.description', readonly=True)
-    author = fields.Char(string='Author', related='template_id.author', readonly=True)
-    website = fields.Char(string='Website', related='template_id.website', readonly=True)
-    license = fields.Char(string='License', related='template_id.license', readonly=True)
-    category = fields.Char(string='Category', related='template_id.category', readonly=True)
-    application = fields.Boolean(string='Application', related='template_id.application', readonly=True)
-    github_path = fields.Char(string='Path in Repository', related='template_id.github_path', readonly=True)
+    # Template-related fields (for easy access)
+    name = fields.Char('Module Name', related='template_id.name', readonly=True)
+    technical_name = fields.Char('Technical Name', related='template_id.technical_name', readonly=True)
+    summary = fields.Text('Summary', related='template_id.summary', readonly=True)
+    description = fields.Html('Description', related='template_id.description', readonly=True)
+    author = fields.Char('Author', related='template_id.author', readonly=True)
+    website = fields.Char('Website', related='template_id.website', readonly=True)
+    license = fields.Char('License', related='template_id.license', readonly=True)
+    category = fields.Char('Category', related='template_id.category', readonly=True)
+    application = fields.Boolean('Application', related='template_id.application', readonly=True)
+    github_path = fields.Char('Path in Repository', related='template_id.github_path', readonly=True)
     
     # Dependencies (from GitHub manifest - readonly)
     depends = fields.Text(string='Dependencies', readonly=True, help='JSON list of module dependencies from GitHub manifest')
@@ -222,64 +225,72 @@ class ModuleRegistry(models.Model):
     @api.depends('version')
     def _compute_version_parts(self):
         for module in self:
-            if module.version:
-                # Parse version string (e.g., "18.0.1.2.3" -> major: "18.0", minor: "1", patch: "2.3")
-                version_parts = module.version.split('.')
-                if len(version_parts) >= 2:
-                    module.major_version = f"{version_parts[0]}.{version_parts[1]}"
-                    module.minor_version = version_parts[2] if len(version_parts) > 2 else '0'
-                    module.patch_version = '.'.join(version_parts[3:]) if len(version_parts) > 3 else '0'
-                else:
-                    module.major_version = module.version
-                    module.minor_version = '0'
-                    module.patch_version = '0'
-            else:
+            if not module.version:
                 module.major_version = '0.0'
+                module.minor_version = '0'
+                module.patch_version = '0'
+                continue
+                
+            # Use our improved version parsing
+            parsed_parts = self._parse_version(module.version)
+            
+            # Extract meaningful parts
+            if parsed_parts[0] > 0 or parsed_parts[1] > 0:
+                module.major_version = f"{parsed_parts[0]}.{parsed_parts[1]}"
+                module.minor_version = str(parsed_parts[2])
+                module.patch_version = str(parsed_parts[3]) if parsed_parts[3] > 0 else '0'
+            else:
+                # Fallback for unusual version formats
+                module.major_version = module.version
                 module.minor_version = '0'
                 module.patch_version = '0'
 
     @api.depends('template_id', 'github_branch', 'version', 'major_version')
     def _compute_version_analysis(self):
         for version in self:
-            if not version.template_id:
-                version.is_latest_version = False
-                version.has_newer_version = False
-                version.newer_versions_count = 0
-                version.version_family_count = 0
+            if not version.template_id or not version.version:
+                version._reset_version_analysis()
                 continue
                 
-            # Find all versions of this template in the same branch
-            branch_versions = self.search([
-                ('template_id', '=', version.template_id.id),
-                ('github_branch', '=', version.github_branch)
-            ])
-            
-            # Find all versions across all branches for family count
-            all_versions = self.search([
-                ('template_id', '=', version.template_id.id)
-            ])
+            branch_versions = self._get_branch_versions(version)
+            all_versions = self._get_all_template_versions(version)
             
             version.version_family_count = len(all_versions)
-            
-            if not version.version:
-                version.is_latest_version = False
-                version.has_newer_version = False
-                version.newer_versions_count = 0
-                continue
-            
-            # Compare versions within the same branch to find if this is the latest
-            current_version_tuple = version._parse_version_for_comparison(version.version)
-            newer_versions = []
-            
-            for other_version in branch_versions:
-                if other_version.id != version.id and other_version.version:
-                    other_version_tuple = version._parse_version_for_comparison(other_version.version)
-                    if other_version_tuple > current_version_tuple:
-                        newer_versions.append(other_version)
+            newer_versions = self._get_newer_versions(version, branch_versions)
             
             version.newer_versions_count = len(newer_versions)
-            version.has_newer_version = len(newer_versions) > 0
-            version.is_latest_version = len(newer_versions) == 0
+            version.has_newer_version = bool(newer_versions)
+            version.is_latest_version = not newer_versions
+
+    def _reset_version_analysis(self):
+        """Reset version analysis fields to default values"""
+        self.is_latest_version = False
+        self.has_newer_version = False
+        self.newer_versions_count = 0
+        self.version_family_count = 0
+
+    def _get_branch_versions(self, version):
+        """Get all versions of the same template in the same branch"""
+        return self.search([
+            ('template_id', '=', version.template_id.id),
+            ('github_branch', '=', version.github_branch)
+        ])
+
+    def _get_all_template_versions(self, version):
+        """Get all versions of the same template across all branches"""
+        return self.search([('template_id', '=', version.template_id.id)])
+
+    def _get_newer_versions(self, version_record, branch_versions):
+        """Get versions newer than the current version in the same branch"""
+        current_version = self._parse_version(version_record.version)
+        newer_versions = []
+        
+        for other_version in branch_versions:
+            if (other_version.id != version_record.id and other_version.version and
+                self._parse_version(other_version.version) > current_version):
+                newer_versions.append(other_version)
+        
+        return newer_versions
 
     def _compute_all_versions(self):
         for version in self:
@@ -291,21 +302,38 @@ class ModuleRegistry(models.Model):
             else:
                 version.all_versions_ids = self.browse()
 
-    def _parse_version_for_comparison(self, version_str):
-        """Parse version string into tuple for comparison"""
+    def _parse_version(self, version_str):
+        """Parse version string into comparable tuple with better handling"""
         if not version_str:
-            return (0, 0, 0, 0)
+            return (0, 0, 0, 0, 0)
         
-        parts = version_str.split('.')
-        # Pad with zeros to ensure consistent comparison
+        # Clean up the version string
+        clean_version = version_str.strip().lower()
+        
+        # Remove common prefixes
+        clean_version = re.sub(r'^v\.?', '', clean_version)
+        
+        # Extract numeric parts using regex
+        # This handles versions like "18.0.1.2.3", "1.0", "2.1.0-beta", etc.
+        numeric_parts = re.findall(r'\d+', clean_version)
+        
+        if not numeric_parts:
+            return (0, 0, 0, 0, 0)
+        
+        # Convert to integers and pad to 4 parts for consistent comparison
+        parts = [int(part) for part in numeric_parts[:4]]
         while len(parts) < 4:
-            parts.append('0')
+            parts.append(0)
         
-        try:
-            return tuple(int(part) for part in parts[:4])
-        except ValueError:
-            # If conversion fails, treat as 0
-            return (0, 0, 0, 0)
+        # Handle pre-release versions (alpha, beta, rc) by adding a negative component
+        if any(keyword in clean_version for keyword in ['alpha', 'beta', 'rc', 'dev', 'pre']):
+            # Add a 5th element to indicate pre-release (negative sorts before positive)
+            parts.append(-1)
+        else:
+            # Add a 5th element for final releases
+            parts.append(0)
+        
+        return tuple(parts)
 
     @api.model
     def sync_modules_from_repository(self, repository_id):
@@ -439,131 +467,143 @@ class ModuleRegistry(models.Model):
     def _parse_manifest_from_github(self, manifest_file_data, repository, module_path, branch=None):
         """Parse __manifest__.py content from GitHub API response"""
         try:
-            # Decode base64 content
-            content = base64.b64decode(manifest_file_data['content']).decode('utf-8')
-            
-            # Parse the manifest file (it's a Python dict)
-            # Remove comments and clean up the content
-            content = re.sub(r'#.*', '', content)
-            
-            # Use ast.literal_eval to safely evaluate the Python dict
-            import ast
-            manifest_dict = ast.literal_eval(content)
-            
-            # Extract Odoo version from version string (e.g., "18.0.1.0.0" -> "18.0")
-            version_str = manifest_dict.get('version', '')
-            odoo_version_match = re.match(r'^(\\d+\\.\\d+)', version_str)
-            odoo_version = odoo_version_match.group(1) if odoo_version_match else '18.0'
-            
-            # Use branch or default branch for URLs
-            url_branch = branch or repository.default_branch
-            
-            module_data = {
-                'technical_name': module_path.split('/')[-1],
-                'name': manifest_dict.get('name', module_path.split('/')[-1]),
-                'version': version_str,
-                'odoo_version': odoo_version,
-                'summary': manifest_dict.get('summary', ''),
-                'description': manifest_dict.get('description', ''),
-                'author': manifest_dict.get('author', ''),
-                'website': manifest_dict.get('website', ''),
-                'license': manifest_dict.get('license', ''),
-                'category': manifest_dict.get('category', 'Uncategorized'),
-                'installable': manifest_dict.get('installable', True),
-                'auto_install': manifest_dict.get('auto_install', False),
-                'application': manifest_dict.get('application', False),
-                'depends': json.dumps(manifest_dict.get('depends', [])),
-                'external_dependencies': json.dumps(manifest_dict.get('external_dependencies', {})),
-                'data_files': json.dumps(manifest_dict.get('data', [])),
-                'demo_files': json.dumps(manifest_dict.get('demo', [])),
-                'assets': json.dumps(manifest_dict.get('assets', {})),
-                'manifest_data': manifest_dict,
-                'github_path': module_path,
-                'manifest_url': manifest_file_data['html_url'],
-                'readme_url': f"{repository.html_url}/blob/{url_branch}/{module_path}/README.md",
-            }
-            
-            return module_data
-            
+            manifest_dict = self._decode_and_parse_manifest(manifest_file_data['content'])
+            return self._build_module_data(manifest_dict, manifest_file_data, repository, module_path, branch)
         except Exception as e:
             _logger.error(f"Error parsing manifest for {module_path} in branch {branch}: {str(e)}")
             return None
 
+    def _decode_and_parse_manifest(self, base64_content):
+        """Decode and parse manifest content"""
+        import ast
+        content = base64.b64decode(base64_content).decode('utf-8')
+        content = re.sub(r'#.*', '', content)  # Remove comments
+        return ast.literal_eval(content)
+
+    def _extract_odoo_version(self, version_str):
+        """Extract Odoo version from version string using improved parsing"""
+        if not version_str:
+            return '18.0'
+        
+        # Use our improved version parsing to get the parts
+        parsed = self._parse_version(version_str)
+        
+        # For Odoo versions, we typically want the first two parts (e.g., 18.0)
+        if parsed[0] > 0:
+            return f"{parsed[0]}.{parsed[1]}"
+        
+        # Fallback to regex for edge cases
+        match = re.match(r'^(\\d+\\.\\d+)', version_str)
+        return match.group(1) if match else '18.0'
+
+    def _build_module_data(self, manifest_dict, manifest_file_data, repository, module_path, branch):
+        """Build module data dictionary from manifest"""
+        version_str = manifest_dict.get('version', '')
+        technical_name = module_path.split('/')[-1]
+        url_branch = branch or repository.default_branch
+        
+        return {
+            'technical_name': technical_name,
+            'name': manifest_dict.get('name', technical_name),
+            'version': version_str,
+            'odoo_version': self._extract_odoo_version(version_str),
+            'summary': manifest_dict.get('summary', ''),
+            'description': manifest_dict.get('description', ''),
+            'author': manifest_dict.get('author', ''),
+            'website': manifest_dict.get('website', ''),
+            'license': manifest_dict.get('license', ''),
+            'category': manifest_dict.get('category', 'Uncategorized'),
+            'installable': manifest_dict.get('installable', True),
+            'auto_install': manifest_dict.get('auto_install', False),
+            'application': manifest_dict.get('application', False),
+            'depends': json.dumps(manifest_dict.get('depends', [])),
+            'external_dependencies': json.dumps(manifest_dict.get('external_dependencies', {})),
+            'data_files': json.dumps(manifest_dict.get('data', [])),
+            'demo_files': json.dumps(manifest_dict.get('demo', [])),
+            'assets': json.dumps(manifest_dict.get('assets', {})),
+            'manifest_data': manifest_dict,
+            'github_path': module_path,
+            'manifest_url': manifest_file_data['html_url'],
+            'readme_url': f"{repository.html_url}/blob/{url_branch}/{module_path}/README.md",
+        }
+
     def _create_or_update_module(self, module_data, repository):
         """Create or update a module version record"""
         try:
-            # Find or create Odoo version record
-            odoo_version = self.env['odoo.version'].search([('name', '=', module_data['odoo_version'])], limit=1)
-            if not odoo_version:
-                odoo_version = self.env['odoo.version'].create({
-                    'name': module_data['odoo_version']
-                })
-            
-            # Find or create module template
+            odoo_version = self._find_or_create_odoo_version(module_data['odoo_version'])
             template = self.env['module.template'].find_or_create_template(module_data, repository)
+            version_data = self._prepare_version_data(module_data, template, odoo_version, repository)
             
-            # Prepare version-specific data
-            version_data = {
-                'template_id': template.id,
-                'version': module_data['version'],
-                'odoo_version_id': odoo_version.id,
-                'github_branch': module_data.get('github_branch', repository.default_branch),
-                'installable': module_data.get('installable', True),
-                'auto_install': module_data.get('auto_install', False),
-                'manifest_data': module_data.get('manifest_data', {}),
-                'manifest_url': module_data.get('manifest_url', ''),
-                'readme_url': module_data.get('readme_url', ''),
-                'last_sync': fields.Datetime.now(),
-                'sync_status': 'success',
-                'sync_error': False,
-            }
-            
-            # Version-specific dependencies and files
-            version_data.update({
-                'depends': module_data.get('depends', '[]'),
-                'external_dependencies': module_data.get('external_dependencies', '{}'),
-                'data_files': module_data.get('data_files', '[]'),
-                'demo_files': module_data.get('demo_files', '[]'),
-                'assets': module_data.get('assets', '{}'),
-            })
-            
-            existing_version = self.search([
-                ('template_id', '=', template.id),
-                ('github_branch', '=', module_data.get('github_branch', repository.default_branch)),
-                ('version', '=', module_data['version'])
-            ], limit=1)
+            existing_version = self._find_existing_version(template, module_data, repository)
             
             if existing_version:
                 existing_version.write(version_data)
-                _logger.info(f"Updated version {module_data['technical_name']} v{module_data['version']} from {repository.full_name} ({module_data.get('github_branch', 'default')})")
+                _logger.info(f"Updated version {module_data['technical_name']} v{module_data['version']} "
+                           f"from {repository.full_name} ({module_data.get('github_branch', 'default')})")
             else:
                 self.create(version_data)
-                _logger.info(f"Created version {module_data['technical_name']} v{module_data['version']} from {repository.full_name} ({module_data.get('github_branch', 'default')})")
+                _logger.info(f"Created version {module_data['technical_name']} v{module_data['version']} "
+                           f"from {repository.full_name} ({module_data.get('github_branch', 'default')})")
                 
         except Exception as e:
             _logger.error(f"Error creating/updating module version {module_data.get('technical_name', 'unknown')}: {str(e)}")
-            # Try to create error record if template exists
-            try:
-                template = self.env['module.template'].search([
-                    ('technical_name', '=', module_data['technical_name']),
-                    ('github_repository_id', '=', repository.id)
-                ], limit=1)
-                
-                if template:
-                    existing_version = self.search([
-                        ('template_id', '=', template.id),
-                        ('github_branch', '=', module_data.get('github_branch', repository.default_branch)),
-                        ('version', '=', module_data.get('version', ''))
-                    ], limit=1)
-                    
-                    if existing_version:
-                        existing_version.write({
-                            'sync_status': 'error',
-                            'sync_error': str(e),
-                            'last_sync': fields.Datetime.now()
-                        })
-            except Exception as inner_e:
-                _logger.error(f"Error updating error status: {str(inner_e)}")
+            self._handle_sync_error(module_data, repository, str(e))
+
+    def _find_or_create_odoo_version(self, version_name):
+        """Find or create Odoo version record"""
+        odoo_version = self.env['odoo.version'].search([('name', '=', version_name)], limit=1)
+        if not odoo_version:
+            odoo_version = self.env['odoo.version'].create({'name': version_name})
+        return odoo_version
+
+    def _prepare_version_data(self, module_data, template, odoo_version, repository):
+        """Prepare version data for create/update"""
+        return {
+            'template_id': template.id,
+            'version': module_data['version'],
+            'odoo_version_id': odoo_version.id,
+            'github_branch': module_data.get('github_branch', repository.default_branch),
+            'installable': module_data.get('installable', True),
+            'auto_install': module_data.get('auto_install', False),
+            'manifest_data': module_data.get('manifest_data', {}),
+            'manifest_url': module_data.get('manifest_url', ''),
+            'readme_url': module_data.get('readme_url', ''),
+            'depends': module_data.get('depends', '[]'),
+            'external_dependencies': module_data.get('external_dependencies', '{}'),
+            'data_files': module_data.get('data_files', '[]'),
+            'demo_files': module_data.get('demo_files', '[]'),
+            'assets': module_data.get('assets', '{}'),
+            'last_sync': fields.Datetime.now(),
+            'sync_status': 'success',
+            'sync_error': False,
+        }
+
+    def _find_existing_version(self, template, module_data, repository):
+        """Find existing version record"""
+        return self.search([
+            ('template_id', '=', template.id),
+            ('github_branch', '=', module_data.get('github_branch', repository.default_branch)),
+            ('version', '=', module_data['version'])
+        ], limit=1)
+
+    def _handle_sync_error(self, module_data, repository, error_msg):
+        """Handle sync error by updating existing version with error status"""
+        try:
+            template = self.env['module.template'].search([
+                ('technical_name', '=', module_data['technical_name']),
+                ('github_repository_id', '=', repository.id)
+            ], limit=1)
+            
+            if template:
+                existing_version = self._find_existing_version(template, module_data, repository)
+                if existing_version:
+                    existing_version.write({
+                        'sync_status': 'error',
+                        'sync_error': error_msg,
+                        'last_sync': fields.Datetime.now()
+                    })
+        except Exception as inner_e:
+            _logger.error(f"Error updating error status: {str(inner_e)}")
 
     def action_sync_from_github(self):
         """Action to sync module from GitHub"""

@@ -13,92 +13,91 @@ class ModuleLibrary(models.Model):
     _order = 'name'
 
     # Library information
-    sequence = fields.Integer('sequence')
-    name = fields.Char(string='Library Name', required=True, index=True, help='Name for this module library/collection')
-    description = fields.Text(string='Description', help='Description of this module library')
+    sequence = fields.Integer('Sequence')
+    name = fields.Char('Library Name', required=True, index=True)
+    description = fields.Text('Description')
     
     # GitHub repository reference
-    github_repository_id = fields.Many2one('github.repository', string='GitHub Repository', required=True, ondelete='cascade')
+    github_repository_id = fields.Many2one('github.repository', 'GitHub Repository', 
+                                         required=True, ondelete='cascade')
     
     # Library settings
-    auto_sync = fields.Boolean(string='Auto Sync', default=False, help='Automatically sync modules from repository during cron jobs')
+    auto_sync = fields.Boolean('Auto Sync', default=False)
     sync_frequency = fields.Selection([
         ('daily', 'Daily'),
         ('weekly', 'Weekly'),
         ('manual', 'Manual Only')
-    ], string='Sync Frequency', default='manual', help='How often to sync this library')
+    ], 'Sync Frequency', default='manual')
     
     # Templates and versions in this library
-    template_ids = fields.One2many('module.template', 'library_id', string='Module Templates')
-    version_ids = fields.One2many('module.registry', 'library_id', string='Module Versions')
-    module_ids = fields.One2many('module.registry', 'library_id', string='Module Versions')  # Same as version_ids for view compatibility
+    template_ids = fields.One2many('module.template', 'library_id', 'Module Templates')
+    version_ids = fields.One2many('module.registry', 'library_id', 'Module Versions')
+    module_ids = fields.One2many('module.registry', 'library_id', 'Module Versions')  # Alias for views
     
     # Computed fields
-    template_count = fields.Integer(string='Template Count', compute='_compute_counts', store=True)
-    version_count = fields.Integer(string='Version Count', compute='_compute_counts', store=True)
-    module_count = fields.Integer(string='Module Count', compute='_compute_counts', store=True)
-    active_version_count = fields.Integer(string='Active Versions', compute='_compute_counts', store=True)
-    last_sync = fields.Datetime(string='Last Sync', compute='_compute_sync_info', store=True)
+    template_count = fields.Integer('Template Count', compute='_compute_counts', store=True)
+    version_count = fields.Integer('Version Count', compute='_compute_counts', store=True)
+    module_count = fields.Integer('Module Count', compute='_compute_counts', store=True)
+    active_version_count = fields.Integer('Active Versions', compute='_compute_counts', store=True)
+    supported_odoo_versions = fields.Char('Supported Odoo Versions', compute='_compute_counts', store=True)
+    
+    # Sync info
+    last_sync = fields.Datetime('Last Sync', compute='_compute_sync_info', store=True)
     sync_status = fields.Selection([
         ('success', 'Success'),
         ('error', 'Error'),
         ('pending', 'Pending'),
         ('never', 'Never Synced')
-    ], string='Sync Status', compute='_compute_sync_info', store=True)
-    supported_odoo_versions = fields.Char(string='Supported Odoo Versions', compute='_compute_counts', store=True)
+    ], 'Sync Status', compute='_compute_sync_info', store=True)
     
-    # Repository info (related fields for convenience)
-    repository_name = fields.Char(string='Repository', related='github_repository_id.full_name', store=True)
-    repository_url = fields.Char(string='Repository URL', related='github_repository_id.html_url', store=True)
+    # Repository info (related fields)
+    repository_name = fields.Char('Repository', related='github_repository_id.full_name', store=True)
+    repository_url = fields.Char('Repository URL', related='github_repository_id.html_url', store=True)
     
     _sql_constraints = [
         ('unique_repository', 'unique(github_repository_id)', 
          'Each repository can only have one library entry!'),
     ]
 
-    @api.depends('template_ids', 'version_ids', 'version_ids.version_status', 'version_ids.odoo_version_id')
+    @api.depends('template_ids', 'version_ids.version_status', 'version_ids.odoo_version_id')
     def _compute_counts(self):
         for library in self:
+            versions = library.version_ids
             library.template_count = len(library.template_ids)
-            library.version_count = len(library.version_ids)
-            library.module_count = len(library.template_ids)  # Module count = template count (unique modules)
-            
-            # Count active versions
-            active_versions = library.version_ids.filtered(lambda v: v.version_status == 'active')
-            library.active_version_count = len(active_versions)
+            library.version_count = len(versions)
+            library.module_count = library.template_count  # Module count = template count (unique modules)
+            library.active_version_count = len(versions.filtered(lambda v: v.version_status == 'active'))
             
             # Get supported Odoo versions
-            odoo_versions = library.version_ids.mapped('odoo_version_id.name')
-            library.supported_odoo_versions = ', '.join(sorted(set(odoo_versions))) if odoo_versions else ''
+            odoo_versions = versions.mapped('odoo_version_id.name')
+            library.supported_odoo_versions = ', '.join(sorted(set(filter(None, odoo_versions))))
 
     @api.depends('template_ids.last_sync', 'version_ids.last_sync')
     def _compute_sync_info(self):
         for library in self:
-            all_sync_dates = []
-            all_sync_dates.extend(library.template_ids.mapped('last_sync'))
-            all_sync_dates.extend(library.version_ids.mapped('last_sync'))
-            
-            if all_sync_dates:
-                library.last_sync = max([d for d in all_sync_dates if d])
-            else:
-                library.last_sync = False
+            # Get all sync dates
+            sync_dates = (library.template_ids.mapped('last_sync') + 
+                         library.version_ids.mapped('last_sync'))
+            library.last_sync = max(filter(None, sync_dates)) if sync_dates else False
             
             # Compute sync status
             if not library.template_ids and not library.version_ids:
                 library.sync_status = 'never'
             else:
-                template_statuses = library.template_ids.mapped('sync_status')
-                version_statuses = library.version_ids.mapped('sync_status')
-                all_statuses = template_statuses + version_statuses
-                
-                if 'error' in all_statuses:
-                    library.sync_status = 'error'
-                elif 'pending' in all_statuses:
-                    library.sync_status = 'pending'
-                elif all(status == 'success' for status in all_statuses):
-                    library.sync_status = 'success'
-                else:
-                    library.sync_status = 'pending'
+                all_statuses = (library.template_ids.mapped('sync_status') + 
+                              library.version_ids.mapped('sync_status'))
+                library.sync_status = self._determine_sync_status(all_statuses)
+
+    def _determine_sync_status(self, statuses):
+        """Determine overall sync status from individual statuses"""
+        if 'error' in statuses:
+            return 'error'
+        elif 'pending' in statuses:
+            return 'pending'
+        elif all(status == 'success' for status in statuses):
+            return 'success'
+        else:
+            return 'pending'
 
     @api.model
     def create_library_for_repository(self, repository_id):

@@ -148,11 +148,6 @@
                                         <field name="version_string"/>
                                     </small>
                                 </div>
-                                <div class="o_kanban_record_top_right">
-                                    <span t-if="record.is_current.raw_value" class="badge badge-success">Current</span>
-                                    <span t-if="record.is_lts.raw_value" class="badge badge-info">LTS</span>
-                                    <span t-if="!record.is_supported.raw_value" class="badge badge-danger">Unsupported</span>
-                                </div>
                             </div>
                             <div class="o_kanban_record_body">
                                 <div class="text-muted">

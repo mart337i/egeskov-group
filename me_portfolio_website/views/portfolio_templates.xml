@@ -1,0 +1,297 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <template id="portfolio_landing_page" name="Portfolio Landing Page">
+        <html lang="da">
+            <head>
+                <meta charset="UTF-8"/>
+                <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+                <title>Martin Egeskov Olsen</title>
+                <meta name="description" content="Softwareudvikler med speciale i Odoo ERP, Python og systemintegration. Se mine projekter og erfaringer."/>
+                
+                <!-- Bootstrap CSS -->
+                <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet"/>
+                
+                <!-- Font Awesome -->
+                <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css"/>
+                
+                <!-- Google Fonts -->
+                <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet"/>
+                
+                <!-- Custom CSS -->
+                <link rel="stylesheet" href="/me_portfolio_website/static/src/css/portfolio.css"/>
+            </head>
+            <body>
+                <!-- Loading Screen -->
+                <div id="loading-screen" class="loading-screen">
+                    <div class="loading-content">
+                        <div class="loading-spinner"></div>
+                        <p class="loading-text">Indlæser...</p>
+                    </div>
+                </div>
+                
+                <!-- Skip to main content -->
+                <a href="#main" class="skip-link">Spring til hovedindhold</a>
+                <!-- Navigation -->
+                <nav class="navbar navbar-expand-lg navbar-dark fixed-top">
+                    <div class="container">
+                        <a class="navbar-brand fw-bold" href="#">Portfolio</a>
+                        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                            <span class="navbar-toggler-icon"></span>
+                        </button>
+                        <div class="collapse navbar-collapse" id="navbarNav">
+                            <ul class="navbar-nav ms-auto">
+                                <li class="nav-item"><a class="nav-link" href="#home">Hjem</a></li>
+                                <li class="nav-item"><a class="nav-link" href="#about">Om Mig</a></li>
+                                <li class="nav-item"><a class="nav-link" href="#skills">Kompetencer</a></li>
+                                <li class="nav-item"><a class="nav-link" href="#projects">Projekter</a></li>
+                                <li class="nav-item"><a class="nav-link" href="#contact">Kontakt</a></li>
+                            </ul>
+                        </div>
+                    </div>
+                </nav>
+
+                <!-- Hero Section -->
+                <main id="main">
+                <section id="home" class="hero-section">
+                    <div class="hero-background"></div>
+                    <div class="container">
+                        <div class="row min-vh-100 align-items-center">
+                            <div class="col-lg-6">
+                                <div class="hero-content">
+                                    <h1 class="hero-title">
+                                        <span class="greeting">Hej, jeg hedder</span>
+                                        <span class="name">Martin Egeskov Olsen</span>
+                                        <span class="role">Datateknikker med speciale i programmering</span>
+                                    </h1>
+                                    <p class="hero-description">
+                                        Passioneret softwareudvikler med fokus på kvalitet, procesoptimering og skalerbare løsninger. 
+                                        Jeg kombinerer teknisk dybde med ledelsesansvar i både interne og eksterne teams.
+                                    </p>
+                                    <div class="hero-buttons">
+                                        <a href="#projects" class="btn btn-primary">Se Mine Projekter</a>
+                                        <a href="#contact" class="btn btn-outline">Kontakt Mig</a>
+                                    </div>
+                                    <div class="hero-social">
+                                        <a href="https://github.com/mart337i" class="social-link"><i class="fab fa-github"></i></a>
+                                        <a href="https://www.linkedin.com/in/martin-egeskov-olsen-6612b81b7/" class="social-link"><i class="fab fa-linkedin"></i></a>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-lg-6">
+                                <div class="hero-visual">
+                                    <div class="floating-card card-1"><i class="fab fa-python"></i><span>Python</span></div>
+                                    <div class="floating-card card-2"><i class="fas fa-network-wired"></i><span>Odoo ERP</span></div>
+                                    <div class="floating-card card-3"><i class="fas fa-server"></i><span>PostgreSQL</span></div>
+                                    <div class="floating-card card-4"><i class="fab fa-docker"></i><span>Docker</span></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="scroll-indicator">
+                        <div class="scroll-line"></div>
+                        <span>Scroll</span>
+                    </div>
+                </section>
+
+                <!-- About Section -->
+                <section id="about" class="about-section">
+                    <div class="container">
+                        <div class="row">
+                            <div class="col-lg-6">
+                                <div class="about-content">
+                                    <h2 class="section-title">Om Mig</h2>
+                                    <p class="about-text">
+                                        Jeg er en ung, dedikeret IT-specialist med en passion for programmering og teknologi. 
+                                        Jeg motiveres af kompleksitet og forandring og stræber altid efter at levere løsninger med høj kvalitet.
+                                    </p>
+                                    <p class="about-text">
+                                        I mit daglige arbejde jeg hos VK-Data og i min fritid som teknisk ansvarlig i Tourly.
+                                    </p>
+                                </div>
+                            </div>
+                            <div class="col-lg-6">
+                                <div class="about-image">
+                                    <div class="image-container">
+                                        <img src="/me_portfolio_website/static/src/description/me.jpg" alt="Om Mig"/>
+                                        <div class="image-overlay"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Skills Section -->
+                <section id="skills" class="skills-section">
+                    <div class="container">
+                        <div class="row">
+                            <div class="col-12 text-center">
+                                <h2 class="section-title">Kompetencer &amp; Teknologier</h2>
+                                <p class="section-subtitle">Mine tekniske styrker og værktøjer</p>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-lg-3 col-md-6 mb-4">
+                                <div class="skill-card">
+                                    <div class="skill-icon"><i class="fab fa-python"></i></div>
+                                    <h4>Backend &amp; ERP</h4>
+                                    <p>Python, Odoo ERP, PostgreSQL, Systemintegration</p>
+                                </div>
+                            </div>
+                            <div class="col-lg-3 col-md-6 mb-4">
+                                <div class="skill-card">
+                                    <div class="skill-icon"><i class="fas fa-network-wired"></i></div>
+                                    <h4>DevOps &amp; Infrastruktur</h4>
+                                    <p>Docker, Proxmox, CI/CD, Git, Linux</p>
+                                </div>
+                            </div>
+                            <div class="col-lg-3 col-md-6 mb-4">
+                                <div class="skill-card">
+                                    <div class="skill-icon"><i class="fas fa-users-cog"></i></div>
+                                    <h4>Ledelse &amp; Proces</h4>
+                                    <p>Agile metoder, Projektledelse, Kvalitetssikring</p>
+                                </div>
+                            </div>
+                            <div class="col-lg-3 col-md-6 mb-4">
+                                <div class="skill-card">
+                                    <div class="skill-icon"><i class="fas fa-language"></i></div>
+                                    <h4>Sprog &amp; Kommunikation</h4>
+                                    <p>Dansk, Engelsk, Effektiv kommunikation</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+                <section id="projects" class="projects-section">
+                    <div class="container">
+                        <div class="row">
+                            <div class="col-12 text-center">
+                                <h2 class="section-title">Mine Projekter</h2>
+                                <p class="section-subtitle">Udvalgte projekter jeg har arbejdet på</p>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-lg-4 col-md-6 mb-4">
+                                <div class="project-card">
+                                    <div class="project-image">
+                                        <img src="/me_portfolio_website/static/src/description/qnote.png" alt="QNote Project"/>
+                                        <div class="project-overlay">
+                                            <div class="project-links">
+                                                <a href="https://qnote.dk" target="_blank" class="project-link"><i class="fas fa-external-link-alt"></i></a>
+                                                <a href="https://github.com/mart337i/qnote.dk" target="_blank" class="project-link"><i class="fab fa-github"></i></a>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="project-content">
+                                        <h4>qnote.dk</h4>
+                                        <p>Moderne daglig dagbog med auto-save, tema support. Bygget med Vue 3, Vite og Tailwind CSS for optimal brugeroplevelse</p>
+                                        <div class="project-tech">
+                                            <span class="tech-tag">Vue 3</span>
+                                            <span class="tech-tag">Vite</span>
+                                            <span class="tech-tag">Tailwind CSS</span>
+                                            <span class="tech-tag">DaisyUI</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-lg-4 col-md-6 mb-4">
+                                <div class="project-card">
+                                    <div class="project-image">
+                                        <img src="/me_portfolio_website/static/src/description/deploy-it.png" alt="Deploy-It Project"/>
+                                        <div class="project-overlay">
+                                            <div class="project-links">
+                                                <!-- <a href="https://deploy-it.dk" target="_blank" class="project-link"><i class="fas fa-external-link-alt"></i></a> -->
+                                                <a href="https://github.com/mart337i/deploy-it.dk" target="_blank" class="project-link"><i class="fab fa-github"></i></a>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="project-content">
+                                        <h4>Deploy-It.dk</h4>
+                                        <p>VPS deployment API til Proxmox med automatiseret VM-oprettelse, konfiguration og administration. Komplet infrastruktur løsning med Python og PostgreSQL</p>
+                                        <div class="project-tech">
+                                            <span class="tech-tag">Python</span>
+                                            <span class="tech-tag">Proxmox API</span>
+                                            <span class="tech-tag">PostgreSQL</span>
+                                            <span class="tech-tag">FastAPI</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-lg-4 col-md-6 mb-4">
+                                <div class="project-card">
+                                    <div class="project-image">
+                                        <img src="/me_portfolio_website/static/src/description/tourly.webp" alt="Tourly Project"/>
+                                        <div class="project-overlay">
+                                            <div class="project-links">
+                                                <a href="https://tourly.dk" target="_blank" class="project-link"><i class="fas fa-external-link-alt"></i></a>
+                                                <a href="#" class="project-link"><i class="fab fa-github"></i></a>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="project-content">
+                                        <h4>Tourly.dk</h4>
+                                        <p>Virtuelle rundvisninger der engagerer og imponerer. Som medejer og CTO leverer vi interaktive 360° oplevelser tilgængelige 24/7 for at booste online tilstedeværelse</p>
+                                        <div class="project-tech">
+                                            <span class="tech-tag">360° Video</span>
+                                            <span class="tech-tag">Interactive Media</span>
+                                            <span class="tech-tag">VR</span>
+                                            <span class="tech-tag">Infrastruktur</span>
+                                            <span class="tech-tag">Sikkerhed</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+                <!-- Contact Section -->
+                <section id="contact" class="contact-section">
+                    <div class="container">
+                        <div class="row">
+                            <div class="col-12 text-center">
+                                <h2 class="section-title">Lad os tale sammen</h2>
+                                <p class="section-subtitle">Har du et projekt? Så lad mig høre om det.</p>
+                            </div>
+                        </div>
+                        <div class="row justify-content-center">
+                            <div class="col-lg-6 col-md-8">
+                                <div class="contact-content">
+                                    <div class="contact-item">
+                                        <div class="contact-icon">
+                                            <i class="fas fa-envelope"></i>
+                                        </div>
+                                        <div class="contact-info">
+                                            <h5>Email</h5>
+                                            <p>mart337i@gmail.com</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+                </main>
+
+                <!-- Footer -->
+                <footer class="footer">
+                    <div class="container">
+                        <div class="row">
+                            <div class="col-12 text-center">
+                                <div class="footer-social">
+                                    <a href="https://github.com/mart337i" class="social-link"><i class="fab fa-github"></i></a>
+                                    <a href="https://www.linkedin.com/in/martin-egeskov-olsen-6612b81b7/" class="social-link"><i class="fab fa-linkedin"></i></a>
+                                </div>
+                                <p class="footer-text">© 2025 Martin Egeskov Olsen. Alle rettigheder forbeholdes.</p>
+                            </div>
+                        </div>
+                    </div>
+                </footer>
+
+                <!-- Bootstrap JS -->
+                <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+                <!-- Custom JS -->
+                <script src="/me_portfolio_website/static/src/js/portfolio.js"></script>
+            </body>
+        </html>
+    </template>
+</odoo>

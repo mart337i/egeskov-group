@@ -5,9 +5,19 @@ document.addEventListener('DOMContentLoaded', function() {
     initNavigation();
     initScrollEffects();
     initAnimations();
-    initTypingEffect();
     initContactForm();
     initParticles();
+    
+    // Remove loading screen
+    setTimeout(() => {
+        const loadingScreen = document.getElementById('loading-screen');
+        if (loadingScreen) {
+            loadingScreen.style.opacity = '0';
+            setTimeout(() => {
+                loadingScreen.remove();
+            }, 500);
+        }
+    }, 1000);
 });
 
 // Navigation functionality
@@ -99,6 +109,83 @@ function initScrollEffects() {
     });
 }
 
+// Initialize animations
+function initAnimations() {
+    // Add smooth loading animation
+    document.body.style.opacity = '0';
+    document.body.style.transition = 'opacity 0.5s ease';
+    
+    window.addEventListener('load', function() {
+        document.body.style.opacity = '1';
+    });
+    
+    // Add loading states for images
+    const images = document.querySelectorAll('img');
+    images.forEach(img => {
+        img.addEventListener('load', function() {
+            this.style.opacity = '1';
+        });
+        
+        img.addEventListener('error', function() {
+            this.style.display = 'none';
+        });
+        
+        // Set initial state
+        img.style.opacity = '0';
+        img.style.transition = 'opacity 0.3s ease';
+    });
+}
+
+// Animate counter function
+function animateCounter(element) {
+    const target = parseInt(element.textContent);
+    const duration = 2000;
+    const step = target / (duration / 16);
+    let current = 0;
+    
+    const timer = setInterval(() => {
+        current += step;
+        if (current >= target) {
+            element.textContent = target;
+            clearInterval(timer);
+        } else {
+            element.textContent = Math.floor(current);
+        }
+    }, 16);
+}
+
+// Contact form functionality
+function initContactForm() {
+    const contactForm = document.querySelector('.contact-form');
+    if (!contactForm) return;
+    
+    contactForm.addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        // Get form data
+        const formData = new FormData(this);
+        const data = Object.fromEntries(formData);
+        
+        // Basic validation
+        if (!data.name || !data.email || !data.message) {
+            showNotification('Udfyld venligst alle felter.', 'error');
+            return;
+        }
+        
+        // Email validation
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailRegex.test(data.email)) {
+            showNotification('Indtast venligst en gyldig email adresse.', 'error');
+            return;
+        }
+        
+        // Simulate form submission
+        showNotification('Tak for din besked! Jeg vender tilbage hurtigst muligt.', 'success');
+        
+        // Reset form
+        this.reset();
+    });
+}
 
 // Show notification
 function showNotification(message, type = 'success') {
@@ -142,6 +229,9 @@ function initParticles() {
     const heroSection = document.querySelector('.hero-section');
     if (!heroSection) return;
     
+    // Only create particles on desktop
+    if (window.innerWidth < 768) return;
+    
     // Create particles container
     const particlesContainer = document.createElement('div');
     particlesContainer.className = 'particles-container';
@@ -158,7 +248,7 @@ function initParticles() {
     heroSection.appendChild(particlesContainer);
     
     // Create particles
-    for (let i = 0; i < 50; i++) {
+    for (let i = 0; i < 30; i++) {
         createParticle(particlesContainer);
     }
 }

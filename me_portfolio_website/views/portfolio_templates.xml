@@ -21,6 +21,16 @@
                 <link rel="stylesheet" href="/me_portfolio_website/static/src/css/portfolio.css"/>
             </head>
             <body>
+                <!-- Loading Screen -->
+                <div id="loading-screen" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #0f172a; display: flex; align-items: center; justify-content: center; z-index: 9999;">
+                    <div style="text-align: center; color: white;">
+                        <div style="width: 50px; height: 50px; border: 3px solid rgba(99, 102, 241, 0.3); border-top: 3px solid #6366f1; border-radius: 50%; animation: spin 1s linear infinite; margin: 0 auto 1rem;"></div>
+                        <p>Indlæser...</p>
+                    </div>
+                </div>
+                
+                <!-- Skip to main content -->
+                <a href="#main" class="skip-link">Spring til hovedindhold</a>
                 <!-- Navigation -->
                 <nav class="navbar navbar-expand-lg navbar-dark fixed-top">
                     <div class="container">
@@ -41,6 +51,7 @@
                 </nav>
 
                 <!-- Hero Section -->
+                <main id="main">
                 <section id="home" class="hero-section">
                     <div class="hero-background"></div>
                     <div class="container">
@@ -61,9 +72,8 @@
                                         <a href="#contact" class="btn btn-outline">Kontakt Mig</a>
                                     </div>
                                     <div class="hero-social">
-                                        <a href="#" class="social-link"><i class="fab fa-github"></i></a>
-                                        <a href="#" class="social-link"><i class="fab fa-linkedin"></i></a>
-                                        <a href="#" class="social-link"><i class="fab fa-twitter"></i></a>
+                                        <a href="https://github.com/mart337i" class="social-link"><i class="fab fa-github"></i></a>
+                                        <a href="https://www.linkedin.com/in/martin-egeskov-olsen-6612b81b7/" class="social-link"><i class="fab fa-linkedin"></i></a>
                                     </div>
                                 </div>
                             </div>
@@ -95,7 +105,7 @@
                                         Jeg motiveres af kompleksitet og forandring og stræber altid efter at levere løsninger med høj kvalitet.
                                     </p>
                                     <p class="about-text">
-                                        I mit daglige arbejde hos VK-Data og som CTO i Tourly kombinerer jeg softwareudvikling, projektledelse og systemarkitektur.
+                                        I mit daglige arbejde jeg hos VK-Data og i min fritid som teknisk ansvarlig i Tourly.
                                     </p>
                                 </div>
                             </div>
@@ -156,29 +166,30 @@
                     <div class="container">
                         <div class="row">
                             <div class="col-12 text-center">
-                                <h2 class="section-title">Featured Projects</h2>
-                                <p class="section-subtitle">Some of my recent work</p>
+                                <h2 class="section-title">Mine Projekter</h2>
+                                <p class="section-subtitle">Udvalgte projekter jeg har arbejdet på</p>
                             </div>
                         </div>
                         <div class="row">
                             <div class="col-lg-4 col-md-6 mb-4">
                                 <div class="project-card">
                                     <div class="project-image">
-                                        <img src="/me_portfolio_website/static/src/img/project1.jpg" alt="Project 1"/>
+                                        <img src="/me_portfolio_website/static/src/description/qnote.png" alt="QNote Project"/>
                                         <div class="project-overlay">
                                             <div class="project-links">
-                                                <a href="#" class="project-link"><i class="fas fa-external-link-alt"></i></a>
-                                                <a href="#" class="project-link"><i class="fab fa-github"></i></a>
+                                                <a href="https://qnote.dk" target="_blank" class="project-link"><i class="fas fa-external-link-alt"></i></a>
+                                                <a href="https://github.com/mart337i/qnote.dk" target="_blank" class="project-link"><i class="fab fa-github"></i></a>
                                             </div>
                                         </div>
                                     </div>
                                     <div class="project-content">
-                                        <h4>E-Commerce Platform</h4>
-                                        <p>Modern e-commerce solution with React, Node.js, and Stripe integration</p>
+                                        <h4>qnote.dk</h4>
+                                        <p>Moderne daglig dagbog med auto-save, tema support. Bygget med Vue 3, Vite og Tailwind CSS for optimal brugeroplevelse</p>
                                         <div class="project-tech">
-                                            <span class="tech-tag">React</span>
-                                            <span class="tech-tag">Node.js</span>
-                                            <span class="tech-tag">MongoDB</span>
+                                            <span class="tech-tag">Vue 3</span>
+                                            <span class="tech-tag">Vite</span>
+                                            <span class="tech-tag">Tailwind CSS</span>
+                                            <span class="tech-tag">DaisyUI</span>
                                         </div>
                                     </div>
                                 </div>
@@ -186,43 +197,46 @@
                             <div class="col-lg-4 col-md-6 mb-4">
                                 <div class="project-card">
                                     <div class="project-image">
-                                        <img src="/me_portfolio_website/static/src/img/project2.jpg" alt="Project 2"/>
+                                        <img src="/me_portfolio_website/static/src/description/deploy-it.png" alt="Deploy-It Project"/>
                                         <div class="project-overlay">
                                             <div class="project-links">
-                                                <a href="#" class="project-link"><i class="fas fa-external-link-alt"></i></a>
-                                                <a href="#" class="project-link"><i class="fab fa-github"></i></a>
+                                                <!-- <a href="https://deploy-it.dk" target="_blank" class="project-link"><i class="fas fa-external-link-alt"></i></a> -->
+                                                <a href="https://github.com/mart337i/deploy-it.dk" target="_blank" class="project-link"><i class="fab fa-github"></i></a>
                                             </div>
                                         </div>
                                     </div>
                                     <div class="project-content">
-                                        <h4>Task Management App</h4>
-                                        <p>Collaborative project management tool with real-time updates</p>
+                                        <h4>Deploy-It.dk</h4>
+                                        <p>VPS deployment API til Proxmox med automatiseret VM-oprettelse, konfiguration og administration. Komplet infrastruktur løsning med Python og PostgreSQL</p>
                                         <div class="project-tech">
-                                            <span class="tech-tag">Vue.js</span>
-                                            <span class="tech-tag">Socket.io</span>
-                                            <span class="tech-tag">Express</span>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="col-lg-4 col-md-6 mb-4">
-                                <div class="project-card">
-                                    <div class="project-image">
-                                        <img src="/me_portfolio_website/static/src/img/project3.jpg" alt="Project 3"/>
-                                        <div class="project-overlay">
-                                            <div class="project-links">
-                                                <a href="#" class="project-link"><i class="fas fa-external-link-alt"></i></a>
-                                                <a href="#" class="project-link"><i class="fab fa-github"></i></a>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div class="project-content">
-                                        <h4>Analytics Dashboard</h4>
-                                        <p>Data visualization dashboard with interactive charts and reports</p>
-                                        <div class="project-tech">
-                                            <span class="tech-tag">React</span>
-                                            <span class="tech-tag">D3.js</span>
                                             <span class="tech-tag">Python</span>
+                                            <span class="tech-tag">Proxmox API</span>
+                                            <span class="tech-tag">PostgreSQL</span>
+                                            <span class="tech-tag">FastAPI</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-lg-4 col-md-6 mb-4">
+                                <div class="project-card">
+                                    <div class="project-image">
+                                        <img src="/me_portfolio_website/static/src/description/tourly.webp" alt="Tourly Project"/>
+                                        <div class="project-overlay">
+                                            <div class="project-links">
+                                                <a href="https://tourly.dk" target="_blank" class="project-link"><i class="fas fa-external-link-alt"></i></a>
+                                                <a href="#" class="project-link"><i class="fab fa-github"></i></a>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="project-content">
+                                        <h4>Tourly.dk</h4>
+                                        <p>Virtuelle rundvisninger der engagerer og imponerer. Som medejer og CTO leverer vi interaktive 360° oplevelser tilgængelige 24/7 for at booste online tilstedeværelse</p>
+                                        <div class="project-tech">
+                                            <span class="tech-tag">360° Video</span>
+                                            <span class="tech-tag">Interactive Media</span>
+                                            <span class="tech-tag">VR</span>
+                                            <span class="tech-tag">Infrastruktur</span>
+                                            <span class="tech-tag">Sikkerhed</span>
                                         </div>
                                     </div>
                                 </div>
@@ -236,38 +250,27 @@
                         <div class="row">
                             <div class="col-12 text-center">
                                 <h2 class="section-title">Lad os tale sammen</h2>
-                                <p class="section-subtitle">Har du et projekt? Jeg vil gerne høre om det.</p>
+                                <p class="section-subtitle">Har du et projekt? Så lad mig høre om det.</p>
                             </div>
                         </div>
                         <div class="row justify-content-center">
                             <div class="col-lg-8">
-                                <div class="contact-content">
-                                    <div class="row">
-                                        <div class="col-md-6 mb-4">
-                                            <div class="contact-item">
-                                                <div class="contact-icon"><i class="fas fa-envelope"></i></div>
-                                                <div class="contact-info">
-                                                    <h5>Email</h5>
-                                                    <p>mart337i@gmail.com</p>
-                                                </div>
-                                            </div>
+                                <div class="contact-content d-flex justify-content-center">
+                                    <div class="contact-item text-center">
+                                        <div class="contact-icon mb-2">
+                                            <i class="fas fa-envelope fa-2x"></i>
                                         </div>
-                                        <div class="col-md-6 mb-4">
-                                            <div class="contact-item">
-                                                <div class="contact-icon"><i class="fas fa-phone"></i></div>
-                                                <div class="contact-info">
-                                                    <h5>Telefon</h5>
-                                                    <p>+45 22 41 86 86</p>
-                                                </div>
-                                            </div>
+                                        <div class="contact-info">
+                                            <h5>Email</h5>
+                                            <p>mart337i@gmail.com</p>
                                         </div>
                                     </div>
-                                    <!-- Contact form stays unchanged -->
                                 </div>
                             </div>
                         </div>
                     </div>
                 </section>
+                </main>
 
                 <!-- Footer -->
                 <footer class="footer">
@@ -275,9 +278,8 @@
                         <div class="row">
                             <div class="col-12 text-center">
                                 <div class="footer-social">
-                                    <a href="#" class="social-link"><i class="fab fa-github"></i></a>
-                                    <a href="#" class="social-link"><i class="fab fa-linkedin"></i></a>
-                                    <a href="#" class="social-link"><i class="fab fa-twitter"></i></a>
+                                    <a href="https://github.com/mart337i" class="social-link"><i class="fab fa-github"></i></a>
+                                    <a href="https://www.linkedin.com/in/martin-egeskov-olsen-6612b81b7/" class="social-link"><i class="fab fa-linkedin"></i></a>
                                 </div>
                                 <p class="footer-text">© 2025 Martin Egeskov Olsen. Alle rettigheder forbeholdes.</p>
                             </div>

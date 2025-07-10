@@ -12,10 +12,34 @@ body {
     line-height: 1.6;
     color: #333;
     overflow-x: hidden;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
 }
 
 html {
     scroll-behavior: smooth;
+}
+
+/* Focus styles for accessibility */
+*:focus {
+    outline: 2px solid var(--primary-color);
+    outline-offset: 2px;
+}
+
+/* Skip to main content for screen readers */
+.skip-link {
+    position: absolute;
+    top: -40px;
+    left: 6px;
+    background: var(--primary-color);
+    color: white;
+    padding: 8px;
+    text-decoration: none;
+    z-index: 1000;
+}
+
+.skip-link:focus {
+    top: 6px;
 }
 
 /* Custom Properties */
@@ -42,11 +66,13 @@ html {
     backdrop-filter: blur(10px);
     transition: all 0.3s ease;
     padding: 1rem 0;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
 }
 
 .navbar.scrolled {
     background: rgba(15, 23, 42, 0.98);
     padding: 0.5rem 0;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
 }
 
 .navbar-brand {
@@ -59,11 +85,34 @@ html {
     color: rgba(255, 255, 255, 0.8) !important;
     font-weight: 500;
     margin: 0 0.5rem;
-    transition: color 0.3s ease;
+    transition: all 0.3s ease;
+    position: relative;
 }
 
 .nav-link:hover {
     color: var(--primary-color) !important;
+    transform: translateY(-2px);
+}
+
+.nav-link.active {
+    color: var(--primary-color) !important;
+}
+
+.nav-link::after {
+    content: '';
+    position: absolute;
+    bottom: -5px;
+    left: 50%;
+    width: 0;
+    height: 2px;
+    background: var(--primary-color);
+    transition: all 0.3s ease;
+    transform: translateX(-50%);
+}
+
+.nav-link:hover::after,
+.nav-link.active::after {
+    width: 100%;
 }
 
 /* Hero Section */
@@ -346,11 +395,41 @@ section {
     text-align: center;
 }
 
-.stat-number {
-    display: block;
-    font-size: 2.5rem;
-    font-weight: 700;
-    color: var(--primary-color);
+    .stat-number {
+        font-size: 2rem;
+    }
+}
+
+/* Loading animation */
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* Smooth transitions for all interactive elements */
+a, button, .btn, .project-card, .skill-card, .social-link {
+    transition: all 0.3s ease;
+}
+
+/* Improved focus states */
+.btn:focus,
+.social-link:focus,
+.project-link:focus {
+    transform: translateY(-2px);
+    box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.3);
+}
+
+/* Better text contrast */
+.hero-description {
+    color: rgba(255, 255, 255, 0.9);
+}
+
+/* Improved spacing for mobile */
+@media (max-width: 576px) {
+    .container {
+        padding-left: 1rem;
+        padding-right: 1rem;
+    }
 }
 
 .stat-label {
@@ -402,11 +481,19 @@ section {
     box-shadow: var(--shadow-md);
     transition: all 0.3s ease;
     height: 100%;
+    border: 1px solid rgba(0, 0, 0, 0.05);
+    cursor: pointer;
 }
 
 .skill-card:hover {
     transform: translateY(-10px);
     box-shadow: var(--shadow-xl);
+    border-color: var(--primary-color);
+}
+
+.skill-card:focus {
+    transform: translateY(-5px);
+    box-shadow: var(--shadow-lg);
 }
 
 .skill-icon {
@@ -449,11 +536,13 @@ section {
     box-shadow: var(--shadow-md);
     transition: all 0.3s ease;
     height: 100%;
+    border: 1px solid rgba(0, 0, 0, 0.05);
 }
 
 .project-card:hover {
     transform: translateY(-10px);
     box-shadow: var(--shadow-xl);
+    border-color: var(--primary-color);
 }
 
 .project-image {
@@ -530,6 +619,11 @@ section {
     color: var(--text-light);
     margin-bottom: 1.5rem;
     line-height: 1.6;
+    min-height: 3rem;
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
 }
 
 .project-tech {
@@ -630,11 +724,23 @@ section {
 @media (max-width: 768px) {
     .hero-title {
         font-size: 2.5rem;
+        text-align: center;
+    }
+    
+    .hero-description {
+        text-align: center;
     }
     
     .hero-buttons {
         flex-direction: column;
-        align-items: flex-start;
+        align-items: center;
+        width: 100%;
+    }
+    
+    .btn {
+        width: 100%;
+        max-width: 300px;
+        justify-content: center;
     }
     
     .floating-card {
@@ -652,6 +758,18 @@ section {
     section {
         padding: 3rem 0;
     }
+    
+    .navbar-nav {
+        text-align: center;
+    }
+    
+    .project-card {
+        margin-bottom: 2rem;
+    }
+    
+    .skill-card {
+        margin-bottom: 2rem;
+    }
 }
 
 @media (max-width: 576px) {
@@ -665,5 +783,22 @@ section {
     
     .stat-number {
         font-size: 2rem;
+    }
+    
+    .hero-title {
+        font-size: 2rem;
+    }
+    
+    .section-title {
+        font-size: 2rem;
+    }
+    
+    .contact-item {
+        flex-direction: column;
+        text-align: center;
+    }
+    
+    .contact-icon {
+        margin-bottom: 1rem;
     }
 }

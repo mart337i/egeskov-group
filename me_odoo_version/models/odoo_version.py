@@ -157,7 +157,7 @@ class OdooVersion(models.Model):
                 self.minor_version == module_minor)
 
     @api.model
-    def find_or_create_version(self, version_string):
+    def find_version(self, version_string):
         """Find or create a version record from a version string
         Args:
             version_string: Version string (e.g., "18.0" or "18.0.1.0.0")
@@ -171,21 +171,9 @@ class OdooVersion(models.Model):
             
         major = int(match.group(1))
         minor = float(match.group(2))
-        name = f"{major}.{minor}"
+
+        return self.search([('major_version', '=', major), ('minor_version', '=', minor)], limit=1)
         
-        # Try to find existing version
-        version = self.search([('name', '=', name)], limit=1)
-        if version:
-            return version
-            
-        # Create new version
-        return self.create({
-            'name': name,
-            'full_name': f'Odoo {name}',
-            'major_version': major,
-            'minor_version': minor,
-            'status': 'stable',
-        })
 
     def action_open_release_notes(self):
         """Open release notes URL"""

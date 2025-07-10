@@ -2,6 +2,7 @@
 
 from odoo import api, fields, models, _
 import logging
+import os
 
 _logger = logging.getLogger(__name__)
 
@@ -90,3 +91,85 @@ class GitHubRepository(models.Model):
             'domain': [('github_repository_id', '=', self.id)],
             'context': {'default_github_repository_id': self.id}
         }
+
+    def action_force_reclone(self):
+        """Force re-clone of this repository"""
+        if not self.odoo_module_repo:
+            return self._show_notification(
+                'Warning',
+                _('Repository "%s" is not marked as an Odoo module repository.') % self.full_name,
+                'warning'
+            )
+        
+        # Get the local path and remove it
+        module_registry = self.env['module.registry']
+        repo_path = module_registry._get_repository_local_path(self)
+        
+        if os.path.exists(repo_path):
+            import shutil
+            shutil.rmtree(repo_path, ignore_errors=True)
+        
+        # Trigger sync which will re-clone
+        module_registry.sync_modules_from_repository(self.id)
+        
+        return self._show_notification(
+            'Success',
+            _('Repository "%s" re-cloning initiated') % self.full_name,
+            'success'
+        )
+
+    def action_cleanup_local_clone(self):
+        """Clean up local clone of this repository"""
+        module_registry = self.env['module.registry']
+        repo_path = module_registry._get_repository_local_path(self)
+        
+        if os.path.exists(repo_path):
+            import shutil
+            shutil.rmtree(repo_path, ignore_errors=True)
+            return self._show_notification(
+                'Success',
+                _('Local clone of "%s" has been removed') % self.full_name,
+                'success'
+            )
+        else:
+            return self._show_notification(
+                'Info',
+                _('No local clone found for "%s"') % self.full_name,
+                'info'
+            )
+
+    def get_local_clone_info(self):
+        """Get information about the local clone of this repository"""
+        if not self.odoo_module_repo:
+            return {'exists': False, 'reason': 'Not marked as module repository'}
+            
+        module_registry = self.env['module.registry']
+        repo_path = module_registry._get_repository_local_path(self)
+        
+        if not os.path.exists(repo_path):
+            return {'exists': False, 'path': repo_path}
+            
+        try:
+            # Get some basic git info
+            import subprocess
+            
+            # Get last commit info
+            result = subprocess.run([
+                'git', 'log', '-1', '--format=%H|%s|%an|%ad'
+            ], cwd=repo_path, capture_output=True, text=True, timeout=10)
+            
+            if result.returncode == 0:
+                commit_info = result.stdout.strip().split('|')
+                return {
+                    'exists': True,
+                    'path': repo_path,
+                    'last_commit_hash': commit_info[0][:8] if len(commit_info) > 0 else 'Unknown',
+                    'last_commit_message': commit_info[1] if len(commit_info) > 1 else 'Unknown',
+                    'last_commit_author': commit_info[2] if len(commit_info) > 2 else 'Unknown',
+                    'last_commit_date': commit_info[3] if len(commit_info) > 3 else 'Unknown',
+                }
+            else:
+                return {'exists': True, 'path': repo_path, 'error': 'Could not get git info'}
+                
+        except Exception as e:
+            return {'exists': True, 'path': repo_path, 'error': str(e)}

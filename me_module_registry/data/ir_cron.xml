@@ -10,4 +10,15 @@
         <field name="interval_type">days</field>
         <field name="active" eval="True"/>
     </record>
+
+    <!-- Cron job to cleanup old local repository clones weekly -->
+    <record id="ir_cron_cleanup_repos" model="ir.cron">
+        <field name="name">Cleanup Local Repository Clones</field>
+        <field name="model_id" ref="model_module_registry"/>
+        <field name="state">code</field>
+        <field name="code">model.cleanup_local_repositories()</field>
+        <field name="interval_number">1</field>
+        <field name="interval_type">weeks</field>
+        <field name="active" eval="True"/>
+    </record>
 </odoo>

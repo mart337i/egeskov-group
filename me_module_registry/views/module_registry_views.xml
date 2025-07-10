@@ -141,6 +141,7 @@
                     <button name="action_view_all_versions" type="object" string="All Versions" class="btn-secondary"/>
                     <button name="action_mark_deprecated" type="object" string="Mark Deprecated" class="btn-warning" groups="base.group_no_one" invisible="version_status == 'deprecated'"/>
                     <button name="action_mark_obsolete" type="object" string="Mark Obsolete" class="btn-danger" groups="base.group_no_one" invisible="version_status == 'obsolete'"/>
+                    <button name="action_force_reclone" type="object" string="Force Re-clone Repository" class="btn-info" groups="base.group_no_one" invisible="github_repository_id.odoo_module_repo == False"/>
                 </header>
                 <sheet>
                     <div class="oe_title">

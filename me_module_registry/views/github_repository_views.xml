@@ -20,6 +20,11 @@
                         <span class="o_stat_text">Mark as Module Repo</span>
                     </div>
                 </button>
+                <button name="action_force_reclone" type="object" class="oe_stat_button" icon="fa-download" invisible="odoo_module_repo == False">
+                    <div class="o_field_widget o_stat_info">
+                        <span class="o_stat_text">Force Re-clone</span>
+                    </div>
+                </button>
             </xpath>
             
             <xpath expr="//group[@name='repository_info']" position="after">
@@ -28,6 +33,8 @@
                     <field name="module_count"/>
                     <button name="action_mark_as_module_repo" type="object" string="Mark as Module Repository" class="btn-success" invisible="odoo_module_repo == True" icon="fa-plus"/>
                     <button name="action_unmark_as_module_repo" type="object" string="Unmark as Module Repository" class="btn-warning" invisible="odoo_module_repo == True" icon="fa-minus" confirm="This will remove all modules from this repository from the registry and library. Are you sure?"/>
+                    <button name="action_force_reclone" type="object" string="Force Re-clone Repository" class="btn-info" invisible="odoo_module_repo == False" icon="fa-download" confirm="This will delete the local clone and re-download the repository. Continue?"/>
+                    <button name="action_cleanup_local_clone" type="object" string="Clean Up Local Clone" class="btn-secondary" invisible="odoo_module_repo == False" icon="fa-trash"/>
                 </group>
             </xpath>
         </field>

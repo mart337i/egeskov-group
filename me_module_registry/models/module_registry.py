@@ -6,6 +6,11 @@ import requests
 import json
 import base64
 import re
+import os
+import subprocess
+import shutil
+import tempfile
+from pathlib import Path
 
 _logger = logging.getLogger(__name__)
 
@@ -15,6 +20,23 @@ class ModuleRegistry(models.Model):
     _description = 'Module Version (Specific Version Information)'
     _rec_name = 'display_name'
     _order = 'template_id, version desc'
+    
+    # Local Repository Cloning Strategy:
+    # For repositories marked as odoo_module_repo=True, this module now uses local git clones
+    # instead of GitHub API calls to avoid rate limiting issues during heavy operations.
+    # 
+    # Local clones are stored in: {filestore}/module_repos/{repository_full_name_sanitized}/
+    # 
+    # Benefits:
+    # - No GitHub API rate limiting for scanning operations
+    # - Faster access to multiple branches and files
+    # - Better handling of large repositories
+    # - Offline capability once cloned
+    #
+    # The system automatically:
+    # - Clones repositories on first sync
+    # - Updates existing clones on subsequent syncs
+    # - Cleans up clones for unmarked repositories (via cron job)
 
     # Link to template (static information)
     template_id = fields.Many2one('module.template', 'Module Template', 
@@ -335,6 +357,250 @@ class ModuleRegistry(models.Model):
         
         return tuple(parts)
 
+    def _get_module_repos_path(self):
+        """Get the path where module repositories are stored in filestore"""
+        filestore_path = self.env['ir.attachment']._filestore()
+        repos_path = os.path.join(filestore_path, 'module_repos')
+        os.makedirs(repos_path, exist_ok=True)
+        return repos_path
+
+    def _get_repository_local_path(self, repository):
+        """Get the local path for a repository"""
+        repos_path = self._get_module_repos_path()
+        # Use repository full_name but replace / with _ for filesystem safety
+        safe_name = repository.full_name.replace('/', '_')
+        return os.path.join(repos_path, safe_name)
+
+    def _get_or_create_local_clone(self, repository):
+        """Get or create a local clone of the repository"""
+        repo_path = self._get_repository_local_path(repository)
+        
+        if os.path.exists(repo_path):
+            # Repository exists, update it
+            try:
+                _logger.info(f"Updating existing clone at {repo_path}")
+                self._update_local_repository(repo_path)
+                return repo_path
+            except Exception as e:
+                _logger.warning(f"Failed to update repository at {repo_path}: {str(e)}. Re-cloning...")
+                shutil.rmtree(repo_path, ignore_errors=True)
+        
+        # Clone the repository
+        try:
+            _logger.info(f"Cloning repository {repository.full_name} to {repo_path}")
+            clone_url = self._get_clone_url(repository)
+            
+            # Create parent directory if it doesn't exist
+            os.makedirs(os.path.dirname(repo_path), exist_ok=True)
+            
+            # Clone repository normally (not mirror)
+            result = subprocess.run([
+                'git', 'clone', clone_url, repo_path
+            ], check=True, capture_output=True, text=True, timeout=300)
+            
+            # Fetch all branches
+            subprocess.run([
+                'git', 'fetch', '--all'
+            ], cwd=repo_path, check=True, capture_output=True, text=True, timeout=120)
+            
+            _logger.info(f"Successfully cloned repository {repository.full_name}")
+            return repo_path
+            
+        except subprocess.TimeoutExpired:
+            _logger.error(f"Timeout while cloning repository {repository.full_name}")
+            shutil.rmtree(repo_path, ignore_errors=True)
+            return None
+        except subprocess.CalledProcessError as e:
+            error_msg = e.stderr if e.stderr else str(e)
+            _logger.error(f"Failed to clone repository {repository.full_name}: {error_msg}")
+            shutil.rmtree(repo_path, ignore_errors=True)
+            return None
+        except Exception as e:
+            _logger.error(f"Error cloning repository {repository.full_name}: {str(e)}")
+            shutil.rmtree(repo_path, ignore_errors=True)
+            return None
+
+    def _get_clone_url(self, repository):
+        """Get the clone URL for the repository, using token if available"""
+        github_token = self.env['ir.config_parameter'].sudo().get_param('github_integration.token')
+        
+        if github_token:
+            # Use authenticated HTTPS URL
+            return f"https://{github_token}@github.com/{repository.full_name}.git"
+        else:
+            # Use public HTTPS URL
+            return f"https://github.com/{repository.full_name}.git"
+
+    def _update_local_repository(self, repo_path):
+        """Update an existing local repository"""
+        try:
+            # Fetch all updates
+            subprocess.run([
+                'git', 'fetch', '--all', '--prune'
+            ], cwd=repo_path, check=True, capture_output=True, text=True, timeout=120)
+            
+            # Reset to latest state (only if we're on a branch)
+            try:
+                subprocess.run([
+                    'git', 'reset', '--hard', 'HEAD'
+                ], cwd=repo_path, check=True, capture_output=True, text=True, timeout=30)
+            except subprocess.CalledProcessError:
+                # If reset fails, we might be in detached HEAD state, which is fine
+                pass
+            
+            _logger.info(f"Successfully updated repository at {repo_path}")
+            
+        except subprocess.TimeoutExpired:
+            _logger.error(f"Timeout while updating repository at {repo_path}")
+            raise
+        except subprocess.CalledProcessError as e:
+            error_msg = e.stderr if e.stderr else str(e)
+            _logger.error(f"Failed to update repository at {repo_path}: {error_msg}")
+            raise
+
+    def _get_local_repository_branches(self, repo_path):
+        """Get all branches from a local git repository"""
+        try:
+            # Get all remote branches
+            result = subprocess.run([
+                'git', 'branch', '-r'
+            ], cwd=repo_path, check=True, capture_output=True, text=True)
+            
+            branches = []
+            for line in result.stdout.strip().split('\n'):
+                if line.strip() and not line.strip().startswith('origin/HEAD'):
+                    # Extract branch name (remove 'origin/' prefix)
+                    branch_name = line.strip().replace('origin/', '')
+                    # Include main branches and version branches
+                    if (branch_name in ['main', 'master', 'develop'] or 
+                        re.match(r'^\d+\.\d+$', branch_name) or  # Version branches like 18.0, 17.0
+                        re.match(r'^v?\d+\.\d+', branch_name)):  # Version branches like v18.0, 18.0-dev
+                        branches.append(branch_name)
+            
+            # Always include default branch if not already included
+            if not branches:
+                branches = ['main']  # Fallback
+                
+            return branches
+            
+        except subprocess.CalledProcessError as e:
+            _logger.error(f"Failed to get branches from {repo_path}: {e.stderr}")
+            return ['main']  # Fallback
+        except Exception as e:
+            _logger.error(f"Error getting branches from {repo_path}: {str(e)}")
+            return ['main']  # Fallback
+
+    def _discover_modules_in_local_branch(self, repository, repo_path, branch):
+        """Discover all Odoo modules in a specific branch of a local repository"""
+        try:
+            # Checkout the branch
+            subprocess.run([
+                'git', 'checkout', f'origin/{branch}'
+            ], cwd=repo_path, check=True, capture_output=True, text=True, timeout=30)
+            
+            modules_found = []
+            
+            # Scan root directory for modules
+            modules_found.extend(self._scan_local_directory_for_modules(repo_path, repository, "", branch))
+            
+            # Also check common module directories
+            common_dirs = ['addons', 'modules', 'odoo-addons', 'src']
+            for dir_name in common_dirs:
+                dir_path = os.path.join(repo_path, dir_name)
+                if os.path.exists(dir_path) and os.path.isdir(dir_path):
+                    modules_found.extend(self._scan_local_directory_for_modules(dir_path, repository, dir_name, branch))
+            
+            return modules_found
+            
+        except subprocess.TimeoutExpired:
+            _logger.error(f"Timeout while checking out branch {branch} in {repo_path}")
+            return []
+        except subprocess.CalledProcessError as e:
+            error_msg = e.stderr if e.stderr else str(e)
+            _logger.warning(f"Failed to checkout branch {branch} in {repo_path}: {error_msg}")
+            return []
+        except Exception as e:
+            _logger.error(f"Error discovering modules in local branch {branch}: {str(e)}")
+            return []
+
+    def _scan_local_directory_for_modules(self, directory_path, repository, base_path="", branch=None):
+        """Scan a local directory for Odoo modules"""
+        modules_found = []
+        
+        try:
+            if not os.path.exists(directory_path):
+                return modules_found
+                
+            for item in os.listdir(directory_path):
+                item_path = os.path.join(directory_path, item)
+                
+                if os.path.isdir(item_path):
+                    # Check if this directory contains a __manifest__.py file
+                    manifest_path = os.path.join(item_path, '__manifest__.py')
+                    
+                    if os.path.exists(manifest_path):
+                        # This is an Odoo module
+                        module_path = f"{base_path}/{item}" if base_path else item
+                        module_data = self._parse_manifest_from_local_file(manifest_path, repository, module_path, branch)
+                        if module_data:
+                            modules_found.append(module_data)
+                            
+        except Exception as e:
+            _logger.warning(f"Error scanning local directory {directory_path}: {str(e)}")
+            
+        return modules_found
+
+    def _parse_manifest_from_local_file(self, manifest_path, repository, module_path, branch=None):
+        """Parse __manifest__.py content from local file"""
+        try:
+            with open(manifest_path, 'r', encoding='utf-8') as f:
+                content = f.read()
+            
+            # Remove comments and parse
+            content = re.sub(r'#.*', '', content)
+            import ast
+            manifest_dict = ast.literal_eval(content)
+            
+            # Build module data similar to GitHub API version
+            version_str = manifest_dict.get('version', '')
+            technical_name = module_path.split('/')[-1]
+            url_branch = branch or repository.default_branch
+            
+            # Create URLs that point to GitHub (for consistency with existing data)
+            manifest_url = f"{repository.html_url}/blob/{url_branch}/{module_path}/__manifest__.py"
+            readme_url = f"{repository.html_url}/blob/{url_branch}/{module_path}/README.md"
+            
+            module_data = {
+                'technical_name': technical_name,
+                'name': manifest_dict.get('name', technical_name),
+                'version': version_str,
+                'odoo_version': self._extract_odoo_version(version_str),
+                'summary': manifest_dict.get('summary', ''),
+                'description': manifest_dict.get('description', ''),
+                'author': manifest_dict.get('author', ''),
+                'website': manifest_dict.get('website', ''),
+                'license': manifest_dict.get('license', ''),
+                'category': manifest_dict.get('category', 'Uncategorized'),
+                'installable': manifest_dict.get('installable', True),
+                'auto_install': manifest_dict.get('auto_install', False),
+                'application': manifest_dict.get('application', False),
+                'depends': json.dumps(manifest_dict.get('depends', [])),
+                'external_dependencies': json.dumps(manifest_dict.get('external_dependencies', {})),
+                'data_files': json.dumps(manifest_dict.get('data', [])),
+                'demo_files': json.dumps(manifest_dict.get('demo', [])),
+                'assets': json.dumps(manifest_dict.get('assets', {})),
+                'manifest_data': manifest_dict,
+                'github_path': module_path,
+                'manifest_url': manifest_url,
+                'readme_url': readme_url,
+            }
+            
+            return module_data
+            
+        except Exception as e:
+            _logger.error(f"Error parsing local manifest {manifest_path}: {str(e)}")
+            return None
+
     @api.model
     def sync_modules_from_repository(self, repository_id):
         """Sync all modules from a GitHub repository across multiple branches"""
@@ -346,29 +612,92 @@ class ModuleRegistry(models.Model):
             _logger.warning(f"Repository {repository.full_name} is not marked as an Odoo module repository. Skipping sync.")
             return False
 
-        github_token = self.env['ir.config_parameter'].sudo().get_param('github_integration.token')
-        
         try:
-            # Get all branches from the repository
-            branches = self._get_repository_branches(repository, github_token)
-            _logger.info(f"Found {len(branches)} branches in repository {repository.full_name}")
+            # Use local cloning for odoo_module_repo=True repositories
+            if repository.odoo_module_repo:
+                return self._sync_modules_from_local_clone(repository)
+            else:
+                # Fallback to GitHub API for non-module repos (shouldn't happen due to check above)
+                github_token = self.env['ir.config_parameter'].sudo().get_param('github_integration.token')
+                return self._sync_modules_from_github_api(repository, github_token)
+        except Exception as e:
+            _logger.error(f"Error syncing modules from repository {repository.full_name}: {str(e)}")
+            return False
+
+    def _sync_modules_from_local_clone(self, repository):
+        """Sync modules using local git clone instead of GitHub API"""
+        _logger.info(f"Syncing repository {repository.full_name} using local clone")
+        
+        # Get or create local clone
+        repo_path = self._get_or_create_local_clone(repository)
+        if not repo_path:
+            return False
+            
+        try:
+            # Get all branches from local repository
+            branches = self._get_local_repository_branches(repo_path)
+            _logger.info(f"Found {len(branches)} branches in local repository {repository.full_name}")
             
             total_modules = 0
             for branch in branches:
-                modules_found = self._discover_modules_in_repository_branch(repository, branch, github_token)
+                modules_found = self._discover_modules_in_local_branch(repository, repo_path, branch)
                 _logger.info(f"Found {len(modules_found)} modules in branch {branch} of repository {repository.full_name}")
                 
-                for module_data in modules_found:
-                    module_data['github_branch'] = branch
-                    self._create_or_update_module(module_data, repository)
+                # Process modules in smaller batches to avoid large transaction issues
+                batch_size = 10
+                for i in range(0, len(modules_found), batch_size):
+                    batch = modules_found[i:i + batch_size]
+                    
+                    for module_data in batch:
+                        module_data['github_branch'] = branch
+                        self._create_or_update_module(module_data, repository)
+                    
+                    # Commit after each batch to avoid large transactions
+                    try:
+                        self.env.cr.commit()
+                    except Exception as commit_e:
+                        _logger.warning(f"Error committing batch for branch {branch}: {str(commit_e)}")
+                        self.env.cr.rollback()
                 
                 total_modules += len(modules_found)
             
             _logger.info(f"Total modules synced: {total_modules} across {len(branches)} branches")
             return True
         except Exception as e:
-            _logger.error(f"Error syncing modules from repository {repository.full_name}: {str(e)}")
+            _logger.error(f"Error syncing modules from local clone {repository.full_name}: {str(e)}")
             return False
+
+    def _sync_modules_from_github_api(self, repository, github_token):
+        """Original GitHub API sync method (fallback)"""
+        # Get all branches from the repository
+        branches = self._get_repository_branches(repository, github_token)
+        _logger.info(f"Found {len(branches)} branches in repository {repository.full_name}")
+        
+        total_modules = 0
+        for branch in branches:
+            modules_found = self._discover_modules_in_repository_branch(repository, branch, github_token)
+            _logger.info(f"Found {len(modules_found)} modules in branch {branch} of repository {repository.full_name}")
+            
+            # Process modules in smaller batches to avoid large transaction issues
+            batch_size = 10
+            for i in range(0, len(modules_found), batch_size):
+                batch = modules_found[i:i + batch_size]
+                
+                for module_data in batch:
+                    module_data['github_branch'] = branch
+                    self._create_or_update_module(module_data, repository)
+                
+                # Commit after each batch to avoid large transactions
+                try:
+                    self.env.cr.commit()
+                except Exception as commit_e:
+                    _logger.warning(f"Error committing batch for branch {branch}: {str(commit_e)}")
+                    self.env.cr.rollback()
+            
+            total_modules += len(modules_found)
+        
+        _logger.info(f"Total modules synced: {total_modules} across {len(branches)} branches")
+        return True
 
     def _get_repository_branches(self, repository, github_token=None):
         """Get all branches from a GitHub repository"""
@@ -529,32 +858,36 @@ class ModuleRegistry(models.Model):
 
     def _create_or_update_module(self, module_data, repository):
         """Create or update a module version record"""
+        # Use a savepoint to handle potential transaction errors
         try:
-            odoo_version = self._find_or_create_odoo_version(module_data['odoo_version'])
-            template = self.env['module.template'].find_or_create_template(module_data, repository)
-            version_data = self._prepare_version_data(module_data, template, odoo_version, repository)
-            
-            existing_version = self._find_existing_version(template, module_data, repository)
-            
-            if existing_version:
-                existing_version.write(version_data)
-                _logger.info(f"Updated version {module_data['technical_name']} v{module_data['version']} "
-                           f"from {repository.full_name} ({module_data.get('github_branch', 'default')})")
-            else:
-                self.create(version_data)
-                _logger.info(f"Created version {module_data['technical_name']} v{module_data['version']} "
-                           f"from {repository.full_name} ({module_data.get('github_branch', 'default')})")
+            with self.env.cr.savepoint():
+                odoo_version = self._find_odoo_version(module_data['odoo_version'])
+                if not odoo_version:
+                    _logger.error(f"unable to determine Odoo version for {module_data['technical_name']}")
+                    return
                 
+                template = self.env['module.template'].find_or_create_template(module_data, repository)
+                version_data = self._prepare_version_data(module_data, template, odoo_version, repository)
+                
+                existing_version = self._find_existing_version(template, module_data, repository)
+                
+                if existing_version:
+                    existing_version.write(version_data)
+                    _logger.info(f"Updated version {module_data['technical_name']} v{module_data['version']} "
+                               f"from {repository.full_name} ({module_data.get('github_branch', 'default')})")
+                else:
+                    self.create(version_data)
+                    _logger.info(f"Created version {module_data['technical_name']} v{module_data['version']} "
+                               f"from {repository.full_name} ({module_data.get('github_branch', 'default')})")
+                    
         except Exception as e:
             _logger.error(f"Error creating/updating module version {module_data.get('technical_name', 'unknown')}: {str(e)}")
-            self._handle_sync_error(module_data, repository, str(e))
+            # Handle sync error in a separate transaction to avoid transaction abort issues
+            self._handle_sync_error_safe(module_data, repository, str(e))
 
-    def _find_or_create_odoo_version(self, version_name):
+    def _find_odoo_version(self, version_name):
         """Find or create Odoo version record"""
-        odoo_version = self.env['odoo.version'].search([('name', '=', version_name)], limit=1)
-        if not odoo_version:
-            odoo_version = self.env['odoo.version'].create({'name': version_name})
-        return odoo_version
+        return self.env['odoo.version'].find_version(version_name)
 
     def _prepare_version_data(self, module_data, template, odoo_version, repository):
         """Prepare version data for create/update"""
@@ -604,6 +937,63 @@ class ModuleRegistry(models.Model):
                     })
         except Exception as inner_e:
             _logger.error(f"Error updating error status: {str(inner_e)}")
+
+    def _handle_sync_error_safe(self, module_data, repository, error_msg):
+        """Handle sync error safely using a new transaction"""
+        try:
+            # Use a new cursor to avoid transaction abort issues
+            with self.pool.cursor() as new_cr:
+                new_env = api.Environment(new_cr, self.env.uid, self.env.context)
+                
+                template = new_env['module.template'].search([
+                    ('technical_name', '=', module_data['technical_name']),
+                    ('github_repository_id', '=', repository.id)
+                ], limit=1)
+                
+                if template:
+                    existing_version = new_env['module.registry'].search([
+                        ('template_id', '=', template.id),
+                        ('github_branch', '=', module_data.get('github_branch', repository.default_branch)),
+                        ('version', '=', module_data['version'])
+                    ], limit=1)
+                    
+                    if existing_version:
+                        existing_version.write({
+                            'sync_status': 'error',
+                            'sync_error': error_msg,
+                            'last_sync': fields.Datetime.now()
+                        })
+                        new_cr.commit()
+                        _logger.info(f"Updated error status for {module_data['technical_name']}")
+                    else:
+                        # Create a minimal error record if no existing version found
+                        try:
+                            odoo_version = new_env['odoo.version'].search([
+                                ('name', '=', self._extract_odoo_version(module_data.get('version', '')))
+                            ], limit=1)
+                            if not odoo_version:
+                                odoo_version = new_env['odoo.version'].find_version(
+                                    self._extract_odoo_version(module_data.get('version', ''))
+                                )
+                            
+                            new_env['module.registry'].create({
+                                'template_id': template.id,
+                                'version': module_data['version'],
+                                'odoo_version_id': odoo_version.id,
+                                'github_branch': module_data.get('github_branch', repository.default_branch),
+                                'sync_status': 'error',
+                                'sync_error': error_msg,
+                                'last_sync': fields.Datetime.now(),
+                                'installable': False,
+                            })
+                            new_cr.commit()
+                            _logger.info(f"Created error record for {module_data['technical_name']}")
+                        except Exception as create_e:
+                            _logger.error(f"Could not create error record for {module_data['technical_name']}: {str(create_e)}")
+                            new_cr.rollback()
+                            
+        except Exception as outer_e:
+            _logger.error(f"Error in safe error handling for {module_data.get('technical_name', 'unknown')}: {str(outer_e)}")
 
     def action_sync_from_github(self):
         """Action to sync module from GitHub"""
@@ -692,3 +1082,46 @@ class ModuleRegistry(models.Model):
         
         for repository in repositories:
             self.sync_modules_from_repository(repository.id)
+
+    @api.model
+    def cleanup_local_repositories(self):
+        """Clean up local repository clones for repositories that are no longer marked as module repos"""
+        repos_path = self._get_module_repos_path()
+        if not os.path.exists(repos_path):
+            return
+            
+        # Get all marked repositories
+        marked_repos = self.env['github.repository'].search([('odoo_module_repo', '=', True)])
+        marked_repo_names = {repo.full_name.replace('/', '_') for repo in marked_repos}
+        
+        # Clean up directories for unmarked repositories
+        try:
+            for item in os.listdir(repos_path):
+                item_path = os.path.join(repos_path, item)
+                if os.path.isdir(item_path) and item not in marked_repo_names:
+                    _logger.info(f"Cleaning up local repository clone: {item}")
+                    shutil.rmtree(item_path, ignore_errors=True)
+        except Exception as e:
+            _logger.error(f"Error during repository cleanup: {str(e)}")
+
+    def action_force_reclone(self):
+        """Force re-clone of the repository (useful for troubleshooting)"""
+        for module in self:
+            if module.github_repository_id and module.github_repository_id.odoo_module_repo:
+                repo_path = self._get_repository_local_path(module.github_repository_id)
+                if os.path.exists(repo_path):
+                    _logger.info(f"Force re-cloning repository {module.github_repository_id.full_name}")
+                    shutil.rmtree(repo_path, ignore_errors=True)
+                
+                # Trigger sync which will re-clone
+                self.sync_modules_from_repository(module.github_repository_id.id)
+        
+        return {
+            'type': 'ir.actions.client',
+            'tag': 'display_notification',
+            'params': {
+                'title': _('Success'),
+                'message': _('Repository re-cloning initiated'),
+                'type': 'success',
+            }
+        }

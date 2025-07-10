@@ -406,6 +406,41 @@ section {
     100% { transform: rotate(360deg); }
 }
 
+.loading-screen {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: var(--bg-dark);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 9999;
+    transition: opacity 0.5s ease;
+}
+
+.loading-content {
+    text-align: center;
+    color: var(--white);
+}
+
+.loading-spinner {
+    width: 50px;
+    height: 50px;
+    border: 3px solid rgba(99, 102, 241, 0.3);
+    border-top: 3px solid var(--primary-color);
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    margin: 0 auto 1rem;
+}
+
+.loading-text {
+    font-size: 1rem;
+    color: rgba(255, 255, 255, 0.8);
+    margin: 0;
+}
+
 /* Smooth transitions for all interactive elements */
 a, button, .btn, .project-card, .skill-card, .social-link {
     transition: all 0.3s ease;
@@ -443,19 +478,53 @@ a, button, .btn, .project-card, .skill-card, .social-link {
     display: flex;
     justify-content: center;
     align-items: center;
+    padding: 2rem 0;
 }
 
 .image-container {
     position: relative;
     border-radius: 20px;
     overflow: hidden;
-    max-width: 400px;
+    max-width: 350px;
+    width: 100%;
+    box-shadow: var(--shadow-xl);
+    transition: all 0.3s ease;
+}
+
+.image-container:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 25px 50px rgba(0, 0, 0, 0.15);
 }
 
 .image-container img {
     width: 100%;
     height: auto;
     display: block;
+    aspect-ratio: 1;
+    object-fit: cover;
+    transition: transform 0.3s ease;
+    background: var(--bg-light);
+    min-height: 300px;
+}
+
+.image-container img[src=""],
+.image-container img:not([src]) {
+    background: var(--bg-light);
+    border: 2px dashed var(--text-light);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.image-container img[src=""]:after,
+.image-container img:not([src]):after {
+    content: "Image not found";
+    color: var(--text-light);
+    font-size: 1rem;
+}
+
+.image-container:hover img {
+    transform: scale(1.05);
 }
 
 .image-overlay {
@@ -465,7 +534,12 @@ a, button, .btn, .project-card, .skill-card, .social-link {
     width: 100%;
     height: 100%;
     background: var(--gradient-primary);
-    opacity: 0.2;
+    opacity: 0.1;
+    transition: opacity 0.3s ease;
+}
+
+.image-container:hover .image-overlay {
+    opacity: 0.05;
 }
 
 /* Skills Section */
@@ -556,6 +630,16 @@ a, button, .btn, .project-card, .skill-card, .social-link {
     height: 100%;
     object-fit: cover;
     transition: transform 0.3s ease;
+    background: var(--bg-light);
+}
+
+.project-image img[src=""],
+.project-image img:not([src]) {
+    background: var(--bg-light);
+    border: 2px dashed var(--text-light);
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
 .project-overlay {
@@ -643,44 +727,66 @@ a, button, .btn, .project-card, .skill-card, .social-link {
 
 /* Contact Section */
 .contact-section {
-    background: var(--white);
+    background: var(--bg-light);
+    padding: 5rem 0;
 }
 
 .contact-content {
-    background: var(--bg-light);
-    border-radius: 20px;
-    padding: 3rem;
-    box-shadow: var(--shadow-lg);
+    background: var(--white);
+    border-radius: 25px;
+    padding: 4rem 3rem;
+    box-shadow: var(--shadow-xl);
+    border: 1px solid rgba(0, 0, 0, 0.05);
+    transition: all 0.3s ease;
+    max-width: 500px;
+    margin: 0 auto;
+}
+
+.contact-content:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 25px 50px rgba(0, 0, 0, 0.1);
 }
 
 .contact-item {
     display: flex;
+    flex-direction: column;
     align-items: center;
-    gap: 1rem;
-    margin-bottom: 2rem;
+    text-align: center;
+    gap: 1.5rem;
 }
 
 .contact-icon {
-    width: 60px;
-    height: 60px;
+    width: 80px;
+    height: 80px;
     border-radius: 50%;
     background: var(--gradient-primary);
     display: flex;
     align-items: center;
     justify-content: center;
     color: var(--white);
-    font-size: 1.5rem;
+    font-size: 2rem;
+    box-shadow: var(--shadow-lg);
+    transition: all 0.3s ease;
+}
+
+.contact-icon:hover {
+    transform: scale(1.1);
+    box-shadow: var(--shadow-xl);
 }
 
 .contact-info h5 {
     font-weight: 600;
     color: var(--text-dark);
-    margin-bottom: 0.25rem;
+    margin-bottom: 0.5rem;
+    font-size: 1.3rem;
 }
 
 .contact-info p {
-    color: var(--text-light);
+    color: var(--primary-color);
     margin: 0;
+    font-size: 1.1rem;
+    font-weight: 500;
+    word-break: break-all;
 }
 
 .contact-form {
@@ -752,7 +858,13 @@ a, button, .btn, .project-card, .skill-card, .social-link {
     }
     
     .contact-content {
-        padding: 2rem;
+        padding: 2.5rem 2rem;
+    }
+    
+    .contact-icon {
+        width: 70px;
+        height: 70px;
+        font-size: 1.8rem;
     }
     
     section {
@@ -793,12 +905,8 @@ a, button, .btn, .project-card, .skill-card, .social-link {
         font-size: 2rem;
     }
     
-    .contact-item {
-        flex-direction: column;
-        text-align: center;
-    }
-    
-    .contact-icon {
-        margin-bottom: 1rem;
+    .contact-info p {
+        font-size: 1rem;
+        word-break: break-word;
     }
 }

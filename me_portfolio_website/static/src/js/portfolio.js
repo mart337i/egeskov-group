@@ -119,21 +119,7 @@ function initAnimations() {
         document.body.style.opacity = '1';
     });
     
-    // Add loading states for images
-    const images = document.querySelectorAll('img');
-    images.forEach(img => {
-        img.addEventListener('load', function() {
-            this.style.opacity = '1';
-        });
-        
-        img.addEventListener('error', function() {
-            this.style.display = 'none';
-        });
-        
-        // Set initial state
-        img.style.opacity = '0';
-        img.style.transition = 'opacity 0.3s ease';
-    });
+
 }
 
 // Animate counter function

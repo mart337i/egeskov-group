@@ -5,7 +5,7 @@
             <head>
                 <meta charset="UTF-8"/>
                 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-                <title>Martin Egeskov Olsen - Softwareudvikler Portfolio</title>
+                <title>Martin Egeskov Olsen</title>
                 <meta name="description" content="Softwareudvikler med speciale i Odoo ERP, Python og systemintegration. Se mine projekter og erfaringer."/>
                 
                 <!-- Bootstrap CSS -->
@@ -48,9 +48,9 @@
                             <div class="col-lg-6">
                                 <div class="hero-content">
                                     <h1 class="hero-title">
-                                        <span class="greeting">Hej, jeg er</span>
+                                        <span class="greeting">Hej, jeg hedder</span>
                                         <span class="name">Martin Egeskov Olsen</span>
-                                        <span class="role">Softwareudvikler &amp; Teknisk Leder</span>
+                                        <span class="role">Datateknikker med speciale i programmering</span>
                                     </h1>
                                     <p class="hero-description">
                                         Passioneret softwareudvikler med fokus på kvalitet, procesoptimering og skalerbare løsninger. 

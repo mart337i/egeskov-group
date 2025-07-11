@@ -45,6 +45,8 @@ class ModuleTemplate(models.Model):
     active_versions_count = fields.Integer('Active Versions', compute='_compute_version_stats', store=True)
     supported_odoo_versions = fields.Char('Supported Odoo Versions', 
                                         compute='_compute_version_stats', store=True)
+    odoo_version_ids = fields.Many2many('odoo.version', compute='_compute_odoo_versions', 
+                                       string='Odoo Versions', store=True)
     
     # Sync metadata
     last_sync = fields.Datetime('Last Sync', default=fields.Datetime.now, readonly=True)
@@ -92,6 +94,11 @@ class ModuleTemplate(models.Model):
             # Get supported Odoo versions
             odoo_versions = versions.mapped('odoo_version_id.name')
             template.supported_odoo_versions = ', '.join(sorted(set(filter(None, odoo_versions))))
+
+    @api.depends('version_ids.odoo_version_id')
+    def _compute_odoo_versions(self):
+        for template in self:
+            template.odoo_version_ids = template.version_ids.mapped('odoo_version_id')
 
     def _parse_version(self, version_str):
         """Parse version string into comparable tuple with better handling"""

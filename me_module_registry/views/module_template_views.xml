@@ -61,6 +61,12 @@
         <field name="model">module.template</field>
         <field name="arch" type="xml">
             <kanban class="o_kanban_mobile">
+                <searchpanel>
+                    <field name="category" string="Categories" select="multi" icon="fa-tags"/>
+                    <field name="odoo_version_ids" string="Odoo Versions" select="multi" icon="fa-code"/>
+                    <field name="github_repository_id" string="Repository" select="multi" icon="fa-github"/>
+                    <field name="application" string="Type" select="multi" icon="fa-cube"/>
+                </searchpanel>
                 <field name="name"/>
                 <field name="technical_name"/>
                 <field name="category"/>
@@ -71,6 +77,7 @@
                 <field name="supported_odoo_versions"/>
                 <field name="application"/>
                 <field name="sync_status"/>
+                <field name="odoo_version_ids"/>
                 <templates>
                     <t t-name="kanban-box">
                         <div class="oe_kanban_card oe_kanban_global_click" style="border-left: 3px solid #007cba;">

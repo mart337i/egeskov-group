@@ -90,14 +90,13 @@
                             <div class="col-lg-6">
                                 <div class="about-content">
                                     <h2 class="section-title">Om Mig</h2>
-                                    <p class="about-text">
-                                        Jeg er en ung, dedikeret IT-specialist med en passion for programmering og teknologi. 
-                                        Jeg motiveres af kompleksitet og forandring og stræber altid efter at levere løsninger med høj kvalitet.
+                                     <p class="about-text">
+                                        Jeg er en engageret og passioneret IT-specialist med en stærk interesse for programmering og teknologi. 
+                                        Jeg trives i komplekse og foranderlige miljøer, hvor jeg kan levere løsninger af høj kvalitet og skabe værdi gennem innovation.
                                     </p>
                                     <p class="about-text">
-                                        I mit daglige arbejde jeg hos VK-Data og i min fritid som teknisk ansvarlig i Tourly.
-                                    </p>
-                                </div>
+                                        Til daglig arbejder jeg hos VK-Data, og i min fritid er jeg teknisk ansvarlig i Tourly.
+                                    </p>                                </div>
                             </div>
                             <div class="col-lg-6">
                                 <div class="about-image">
@@ -174,7 +173,7 @@
                                     </div>
                                     <div class="project-content">
                                         <h4>qnote.dk</h4>
-                                        <p>Moderne daglig dagbog med auto-save, tema support. Bygget med Vue 3, Vite og Tailwind CSS for optimal brugeroplevelse</p>
+                                        <p>Moderne daglig dagbog med auto-save og tema-support. Bygget med Vue 3, Vite og Tailwind CSS for optimal brugeroplevelse.</p>
                                         <div class="project-tech">
                                             <span class="tech-tag">Vue 3</span>
                                             <span class="tech-tag">Vite</span>
@@ -197,7 +196,7 @@
                                     </div>
                                     <div class="project-content">
                                         <h4>Deploy-It.dk</h4>
-                                        <p>VPS deployment API til Proxmox med automatiseret VM-oprettelse, konfiguration og administration. Komplet infrastruktur løsning med Python og PostgreSQL</p>
+                                        <p>VPS deployment API til Proxmox med automatiseret VM-oprettelse, konfiguration og administration. Komplet infrastrukturløsning med Python og PostgreSQL.</p>
                                         <div class="project-tech">
                                             <span class="tech-tag">Python</span>
                                             <span class="tech-tag">Proxmox API</span>
@@ -220,7 +219,7 @@
                                     </div>
                                     <div class="project-content">
                                         <h4>Tourly.dk</h4>
-                                        <p>Virtuelle rundvisninger der engagerer og imponerer. Som medejer og CTO leverer vi interaktive 360° oplevelser tilgængelige 24/7 for at booste online tilstedeværelse</p>
+                                        <p>Virtuelle rundvisninger, der engagerer og imponerer. Som medejer og CTO leverer vi interaktive 360° oplevelser tilgængelige 24/7 for at booste online tilstedeværelse.</p>
                                         <div class="project-tech">
                                             <span class="tech-tag">360° Video</span>
                                             <span class="tech-tag">Interactive Media</span>

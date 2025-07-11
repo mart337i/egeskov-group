@@ -395,9 +395,8 @@ section {
     text-align: center;
 }
 
-    .stat-number {
-        font-size: 2rem;
-    }
+.stat-number {
+    font-size: 2rem;
 }
 
 /* Loading animation */

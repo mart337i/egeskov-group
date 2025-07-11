@@ -23,6 +23,15 @@
     'data': [
         'views/portfolio_templates.xml',
     ],
+    'assets': {
+        'web.assets_frontend': [
+            'me_portfolio_website/static/src/internal_lib/fonts/inter-local.css',
+            'me_portfolio_website/static/src/internal_lib/bootstrap/bootstrap.min.css',
+            'me_portfolio_website/static/src/internal_lib/fontawesome/all-local.min.css',
+            'me_portfolio_website/static/src/css/portfolio.css',
+            'me_portfolio_website/static/src/js/portfolio.js',
+        ],
+    },
     # only loaded in demonstration mode
     'demo': [],
 

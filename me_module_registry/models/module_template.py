@@ -78,6 +78,15 @@ class ModuleTemplate(models.Model):
 
     @api.depends('version_ids.version_status', 'version_ids.version', 'version_ids.odoo_version_id')
     def _compute_version_stats(self):
+        """
+        Compute and update statistics for module versions, including total count, active count, latest version, and supported Odoo versions.
+        
+        Updates the following fields for each module template:
+        - `version_count`: Total number of related versions.
+        - `active_versions_count`: Number of versions with status 'active'.
+        - `latest_version_id`: The most recent version, determined by parsed version string.
+        - `supported_odoo_versions`: Comma-separated list of unique Odoo version names supported by the module.
+        """
         for template in self:
             versions = template.version_ids
             template.version_count = len(versions)
@@ -97,11 +106,21 @@ class ModuleTemplate(models.Model):
 
     @api.depends('version_ids.odoo_version_id')
     def _compute_odoo_versions(self):
+        """
+        Compute and assign the set of Odoo versions associated with each module template based on its related versions.
+        """
         for template in self:
             template.odoo_version_ids = template.version_ids.mapped('odoo_version_id')
 
     def _parse_version(self, version_str):
-        """Parse version string into comparable tuple with better handling"""
+        """
+        Parses a version string into a tuple of integers for reliable version comparison.
+        
+        The returned tuple consists of up to four numeric components, padded with zeros if necessary, and a fifth element indicating pre-release status (-1 for pre-release, 0 for final release). Non-numeric or missing version strings result in a tuple of zeros.
+        
+        Returns:
+            tuple: A 5-element tuple representing the parsed version for comparison.
+        """
         if not version_str:
             return (0, 0, 0, 0, 0)
         

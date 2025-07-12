@@ -29,6 +29,7 @@
             'me_portfolio_website/static/src/internal_lib/bootstrap/bootstrap.min.css',
             'me_portfolio_website/static/src/internal_lib/fontawesome/all-local.min.css',
             'me_portfolio_website/static/src/css/portfolio.css',
+            'me_portfolio_website/static/src/internal_lib/bootstrap/bootstrap.bundle.min.js',
             'me_portfolio_website/static/src/js/portfolio.js',
         ],
     },

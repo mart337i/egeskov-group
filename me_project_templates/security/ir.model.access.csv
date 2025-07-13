@@ -1,0 +1,5 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_project_template_user,project.template.user,model_project_template,project.group_project_user,1,0,0,0
+access_project_template_manager,project.template.manager,model_project_template,project.group_project_manager,1,1,1,1
+access_project_template_stage_user,project.template.stage.user,model_project_template_stage,project.group_project_user,1,0,0,0
+access_project_template_stage_manager,project.template.stage.manager,model_project_template_stage,project.group_project_manager,1,1,1,1

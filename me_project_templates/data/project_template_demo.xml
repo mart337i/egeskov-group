@@ -1,0 +1,147 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data noupdate="1">
+        
+        <!-- Software Development Template -->
+        <record id="template_software_development" model="project.template">
+            <field name="name">Custom Software Development</field>
+            <field name="sequence">10</field>
+            <field name="description">&lt;p&gt;Perfect for software development projects with clear phases from backlog to delivery.&lt;/p&gt;</field>
+            <field name="is_custom">True</field>
+            <field name="bullet_green">True</field>
+            <field name="bullet_orange">True</field>
+            <field name="bullet_star">True</field>
+            <field name="bullet_clock">False</field>
+        </record>
+        
+        <record id="stage_backlog" model="project.template.stage">
+            <field name="name">Backlog</field>
+            <field name="sequence">10</field>
+            <field name="template_id" ref="template_software_development"/>
+            <field name="folded">False</field>
+        </record>
+        
+        <record id="stage_specifications" model="project.template.stage">
+            <field name="name">Specifications</field>
+            <field name="sequence">20</field>
+            <field name="template_id" ref="template_software_development"/>
+            <field name="folded">False</field>
+        </record>
+        
+        <record id="stage_development" model="project.template.stage">
+            <field name="name">Development</field>
+            <field name="sequence">30</field>
+            <field name="template_id" ref="template_software_development"/>
+            <field name="folded">False</field>
+        </record>
+        
+        <record id="stage_tests" model="project.template.stage">
+            <field name="name">Tests</field>
+            <field name="sequence">40</field>
+            <field name="template_id" ref="template_software_development"/>
+            <field name="folded">False</field>
+        </record>
+        
+        <record id="stage_delivered" model="project.template.stage">
+            <field name="name">Delivered</field>
+            <field name="sequence">50</field>
+            <field name="template_id" ref="template_software_development"/>
+            <field name="folded">True</field>
+        </record>
+
+        <!-- Agile Scrum Template -->
+        <record id="template_agile_scrum" model="project.template">
+            <field name="name">Custom Agile Scrum</field>
+            <field name="sequence">20</field>
+            <field name="description">&lt;p&gt;Ideal for agile development teams using Scrum methodology.&lt;/p&gt;</field>
+            <field name="is_custom">True</field>
+            <field name="bullet_green">True</field>
+            <field name="bullet_orange">True</field>
+            <field name="bullet_star">False</field>
+            <field name="bullet_clock">False</field>
+        </record>
+        
+        <record id="scrum_stage_backlog" model="project.template.stage">
+            <field name="name">Backlog</field>
+            <field name="sequence">10</field>
+            <field name="template_id" ref="template_agile_scrum"/>
+            <field name="folded">False</field>
+        </record>
+        
+        <record id="scrum_stage_sprint_backlog" model="project.template.stage">
+            <field name="name">Sprint Backlog</field>
+            <field name="sequence">20</field>
+            <field name="template_id" ref="template_agile_scrum"/>
+            <field name="folded">False</field>
+        </record>
+        
+        <record id="scrum_stage_sprint_progress" model="project.template.stage">
+            <field name="name">Sprint in Progress</field>
+            <field name="sequence">30</field>
+            <field name="template_id" ref="template_agile_scrum"/>
+            <field name="folded">False</field>
+        </record>
+        
+        <record id="scrum_stage_sprint_complete" model="project.template.stage">
+            <field name="name">Sprint Complete</field>
+            <field name="sequence">40</field>
+            <field name="template_id" ref="template_agile_scrum"/>
+            <field name="folded">True</field>
+        </record>
+        
+        <record id="scrum_stage_old_sprint" model="project.template.stage">
+            <field name="name">Old Completed Sprint</field>
+            <field name="sequence">50</field>
+            <field name="template_id" ref="template_agile_scrum"/>
+            <field name="folded">True</field>
+        </record>
+
+        <!-- Digital Marketing Template -->
+        <record id="template_digital_marketing" model="project.template">
+            <field name="name">Custom Digital Marketing</field>
+            <field name="sequence">30</field>
+            <field name="description">&lt;p&gt;Great for marketing campaigns and content creation workflows.&lt;/p&gt;</field>
+            <field name="is_custom">True</field>
+            <field name="bullet_green">True</field>
+            <field name="bullet_orange">True</field>
+            <field name="bullet_star">False</field>
+            <field name="bullet_clock">False</field>
+        </record>
+        
+        <record id="marketing_stage_ideas" model="project.template.stage">
+            <field name="name">Ideas</field>
+            <field name="sequence">10</field>
+            <field name="template_id" ref="template_digital_marketing"/>
+            <field name="folded">False</field>
+        </record>
+        
+        <record id="marketing_stage_researching" model="project.template.stage">
+            <field name="name">Researching</field>
+            <field name="sequence">20</field>
+            <field name="template_id" ref="template_digital_marketing"/>
+            <field name="folded">False</field>
+        </record>
+        
+        <record id="marketing_stage_writing" model="project.template.stage">
+            <field name="name">Writing</field>
+            <field name="sequence">30</field>
+            <field name="template_id" ref="template_digital_marketing"/>
+            <field name="folded">False</field>
+        </record>
+        
+        <record id="marketing_stage_editing" model="project.template.stage">
+            <field name="name">Editing</field>
+            <field name="sequence">40</field>
+            <field name="template_id" ref="template_digital_marketing"/>
+            <field name="folded">False</field>
+        </record>
+        
+        <record id="marketing_stage_done" model="project.template.stage">
+            <field name="name">Done</field>
+            <field name="sequence">50</field>
+            <field name="template_id" ref="template_digital_marketing"/>
+            <field name="folded">True</field>
+        </record>
+
+    </data>
+</odoo>

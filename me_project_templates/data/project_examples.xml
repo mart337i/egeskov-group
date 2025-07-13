@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <template id="example_custom_template" name="Custom Project Template">
+        <p>This is a custom project template that can be configured by administrators.</p>
+    </template>
+</odoo>

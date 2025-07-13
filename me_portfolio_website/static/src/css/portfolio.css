@@ -60,13 +60,14 @@ html {
     --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
 }
 
-/* Navigation */
+/* Navigation - Optimized for performance */
 .navbar {
     background: rgba(15, 23, 42, 0.95);
     backdrop-filter: blur(10px);
-    transition: all 0.3s ease;
+    transition: transform 0.3s ease, background-color 0.3s ease;
     padding: 1rem 0;
     box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    will-change: transform, background-color;
 }
 
 .navbar.scrolled {

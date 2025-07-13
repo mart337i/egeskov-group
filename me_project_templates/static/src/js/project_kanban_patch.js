@@ -21,23 +21,20 @@ const originalGet = registry.category("kanban_examples").get;
 
 registry.category("kanban_examples").get = function(key, defaultValue) {
     if (key === 'project') {
-        // Get the original project data
         const originalData = originalGet.call(this, key, defaultValue);
         
         if (!originalData) {
             return defaultValue;
         }
         
-        // Clone the original data to avoid modifying it
         const enhancedData = {
             ...originalData,
             examples: [...originalData.examples]
         };
         
-        // Try to load configurable templates asynchronously
+        // Load configurable templates asynchronously
         rpc("/project_templates/kanban_examples", {}).then(result => {
             if (result && result.examples) {
-                // Process configurable templates
                 result.examples.forEach(example => {
                     if (example.bullets) {
                         example.bullets = example.bullets.map(bulletKey => bulletMap[bulletKey]).filter(Boolean);
@@ -47,9 +44,7 @@ registry.category("kanban_examples").get = function(key, defaultValue) {
                     }
                 });
                 
-                // Add configurable templates to the examples
                 enhancedData.examples.push(...result.examples);
-                console.log("Added", result.examples.length, "configurable templates to kanban examples");
             }
         }).catch(error => {
             console.warn("Could not load configurable project templates:", error);

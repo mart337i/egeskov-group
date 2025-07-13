@@ -12,13 +12,6 @@ class ProjectTemplate(models.Model):
     sequence = fields.Integer(string='Sequence', default=10)
     active = fields.Boolean(string='Active', default=True)
     description = fields.Html(string='Description', translate=True)
-    is_custom = fields.Boolean(string='Custom Template', default=True, help='Distinguishes custom templates from system defaults')
-    
-    # Template configuration
-    ghost_columns = fields.Char(string='Ghost Columns', help='Comma-separated list of ghost column names')
-    apply_examples_text = fields.Char(string='Apply Button Text', default='Use This For My Project', translate=True)
-    allowed_group_bys = fields.Char(string='Allowed Group Bys', default='stage_id', help='Comma-separated list of allowed group by fields')
-    fold_field = fields.Char(string='Fold Field', default='fold')
     
     # Visual elements
     bullet_green = fields.Boolean(string='Green Bullet', default=True)

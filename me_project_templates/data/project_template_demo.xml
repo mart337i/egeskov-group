@@ -7,7 +7,6 @@
             <field name="name">Custom Software Development</field>
             <field name="sequence">10</field>
             <field name="description">&lt;p&gt;Perfect for software development projects with clear phases from backlog to delivery.&lt;/p&gt;</field>
-            <field name="is_custom">True</field>
             <field name="bullet_green">True</field>
             <field name="bullet_orange">True</field>
             <field name="bullet_star">True</field>
@@ -54,7 +53,6 @@
             <field name="name">Custom Agile Scrum</field>
             <field name="sequence">20</field>
             <field name="description">&lt;p&gt;Ideal for agile development teams using Scrum methodology.&lt;/p&gt;</field>
-            <field name="is_custom">True</field>
             <field name="bullet_green">True</field>
             <field name="bullet_orange">True</field>
             <field name="bullet_star">False</field>
@@ -101,7 +99,6 @@
             <field name="name">Custom Digital Marketing</field>
             <field name="sequence">30</field>
             <field name="description">&lt;p&gt;Great for marketing campaigns and content creation workflows.&lt;/p&gt;</field>
-            <field name="is_custom">True</field>
             <field name="bullet_green">True</field>
             <field name="bullet_orange">True</field>
             <field name="bullet_star">False</field>

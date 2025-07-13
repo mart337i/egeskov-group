@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
-    <!-- Project Template list View -->
+    <!-- Project Template List View -->
     <record id="view_project_template_list" model="ir.ui.view">
         <field name="name">project.template.list</field>
         <field name="model">project.template</field>
@@ -8,7 +8,6 @@
             <list string="Project Templates">
                 <field name="sequence" widget="handle"/>
                 <field name="name"/>
-                <field name="is_custom"/>
                 <field name="active"/>
                 <field name="bullet_green"/>
                 <field name="bullet_orange"/>
@@ -35,13 +34,7 @@
                         <h1><field name="name" placeholder="Template Name"/></h1>
                     </div>
                     <group>
-                        <group>
-                            <field name="sequence"/>
-                            <field name="is_custom"/>
-                        </group>
-                        <group>
-                            <field name="apply_examples_text"/>
-                        </group>
+                        <field name="sequence"/>
                     </group>
                     <group string="Visual Elements">
                         <group>

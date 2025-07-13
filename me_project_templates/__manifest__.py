@@ -22,7 +22,7 @@
     'author': "egeskov-group.dk",# Categories can be used to filter modules in modules listing
     # Check https://github.com/odoo/odoo/blob/16.0/odoo/addons/base/data/ir_module_category_data.xml
     # for the full list
-    'category': 'Uncategorized',
+    'category': 'project',
 
     # any module necessary for this one to work correctly
     'depends': ['project'],
@@ -31,7 +31,7 @@
     'data': [
         'security/ir.model.access.csv',
         'views/project_template_views.xml',
-        'views/templates/project_examples.xml',
+        'data/project_examples.xml',
     ],
     # only loaded in demonstration mode
     'demo': [
@@ -40,7 +40,6 @@
     
     'assets': {
         'web.assets_backend': [
-            'me_project_templates/static/src/js/project_kanban_examples.js',
             'me_project_templates/static/src/js/project_kanban_patch.js',
         ],
     },

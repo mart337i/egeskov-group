@@ -28,7 +28,7 @@
                         <div class="collapse navbar-collapse" id="navbarNav">
                             <ul class="navbar-nav ms-auto">
                                 <li class="nav-item"><a class="nav-link" href="#home">Hjem</a></li>
-                                <li class="nav-item"><a class="nav-link" href="#about">Om Mig</a></li>
+                                <li class="nav-item"><a class="nav-link" href="#about">Om mig</a></li>
                                 <li class="nav-item"><a class="nav-link" href="#skills">Kompetencer</a></li>
                                 <li class="nav-item"><a class="nav-link" href="#projects">Projekter</a></li>
                                 <li class="nav-item"><a class="nav-link" href="#contact">Kontakt</a></li>
@@ -55,8 +55,8 @@
                                         Jeg kombinerer teknisk dybde med ledelsesansvar i både interne og eksterne teams.
                                     </p>
                                     <div class="hero-buttons">
-                                        <a href="#projects" class="btn btn-primary">Se Mine Projekter</a>
-                                        <a href="#contact" class="btn btn-outline">Kontakt Mig</a>
+                                        <a href="#projects" class="btn btn-primary">Se mine projekter</a>
+                                        <a href="#contact" class="btn btn-outline">Kontakt mig</a>
                                     </div>
                                     <div class="hero-social">
                                         <a href="https://github.com/mart337i" class="social-link"><i class="fab fa-github"></i></a>
@@ -86,7 +86,7 @@
                         <div class="row">
                             <div class="col-lg-6">
                                 <div class="about-content">
-                                    <h2 class="section-title">Om Mig</h2>
+                                    <h2 class="section-title">Om mig</h2>
                                      <p class="about-text">
                                         Jeg er en engageret og passioneret IT-specialist med en stærk interesse for programmering og teknologi. 
                                         Jeg trives i komplekse og foranderlige miljøer, hvor jeg kan levere løsninger af høj kvalitet og skabe værdi gennem innovation.
@@ -275,7 +275,6 @@
                 
                 <!-- Load JavaScript assets -->
                 <t t-call-assets="web.assets_frontend" t-js="false"/>
-
         </t>
     </template>
 </odoo>

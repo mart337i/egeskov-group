@@ -45,6 +45,7 @@
                 <filter string="Pending Sync" name="sync_pending" domain="[('sync_status', '=', 'pending')]"/>
                 
                 <group expand="0" string="Group By">
+                    <filter string="Major Version" name="group_major_version" context="{'group_by': 'major_versions'}"/>
                     <filter string="Repository" name="group_repository" context="{'group_by': 'github_repository_id'}"/>
                     <filter string="Library" name="group_library" context="{'group_by': 'library_id'}"/>
                     <filter string="Category" name="group_category" context="{'group_by': 'category'}"/>
@@ -78,6 +79,7 @@
                 <field name="application"/>
                 <field name="sync_status"/>
                 <field name="odoo_version_ids"/>
+                <field name="major_versions"/>
                 <templates>
                     <t t-name="kanban-box">
                         <div class="oe_kanban_card oe_kanban_global_click" style="border-left: 3px solid #007cba;">
@@ -203,10 +205,10 @@
 
     <!-- Module Template Action -->
     <record id="action_module_template" model="ir.actions.act_window">
-        <field name="name">Module Templates</field>
+        <field name="name">Modules</field>
         <field name="res_model">module.template</field>
         <field name="view_mode">kanban,list,form</field>
-        <field name="context">{}</field>
+        <field name="context">{'search_default_group_major_version': 1}</field>
         <field name="help" type="html">
             <p class="o_view_nocontent_smiling_face">
                 No module templates found!

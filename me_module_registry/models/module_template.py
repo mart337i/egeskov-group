@@ -47,6 +47,8 @@ class ModuleTemplate(models.Model):
                                         compute='_compute_version_stats', store=True)
     odoo_version_ids = fields.Many2many('odoo.version', compute='_compute_odoo_versions', 
                                        string='Odoo Versions', store=True)
+    major_versions = fields.Char('Major Versions', 
+                                compute='_compute_major_versions', store=True)
     
     # Sync metadata
     last_sync = fields.Datetime('Last Sync', default=fields.Datetime.now, readonly=True)
@@ -111,6 +113,18 @@ class ModuleTemplate(models.Model):
         """
         for template in self:
             template.odoo_version_ids = template.version_ids.mapped('odoo_version_id')
+
+    @api.depends('version_ids.major_version')
+    def _compute_major_versions(self):
+        """
+        Compute major versions from related module registry entries.
+        """
+        for template in self:
+            major_versions = set()
+            for version in template.version_ids:
+                if version.major_version:
+                    major_versions.add(version.major_version)
+            template.major_versions = ', '.join(sorted(major_versions, key=lambda x: float(x) if x.replace('.', '').isdigit() else 0))
 
     def _parse_version(self, version_str):
         """

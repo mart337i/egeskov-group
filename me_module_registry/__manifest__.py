@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 {
     'name': "me_module_registry",
-    'version': '18.0.1.1.0',
+    'version': '18.0.1.1.1',
     'license': "OPL-1",
 
     'summary': """

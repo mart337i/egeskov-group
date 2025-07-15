@@ -413,12 +413,22 @@ class SSLCertificate(models.Model):
     @api.model
     def cron_refresh_certificates(self):
         """Cron job to refresh all certificate information"""
-        for cert in self:
+        certificates = self.search([])
+        _logger.info(f"Starting cron job to refresh {len(certificates)} certificates")
+        
+        success_count = 0
+        error_count = 0
+        
+        for cert in certificates:
             try:
                 cert._compute_certificate_info()
                 _logger.info(f"Refreshed certificate info for: {cert.domain}")
+                success_count += 1
             except Exception as e:
                 _logger.error(f"Failed to refresh certificate for {cert.domain}: {e}")
+                error_count += 1
+        
+        _logger.info(f"Cron job completed: {success_count} successful, {error_count} failed")
 
     @api.constrains('domain')
     def _check_domain_format(self):

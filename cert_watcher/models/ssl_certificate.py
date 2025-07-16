@@ -11,8 +11,6 @@ from odoo import models, fields, api, _
 from odoo.exceptions import UserError, ValidationError
 import logging
 
-
-
 _logger = logging.getLogger(__name__)
 
 class SSLCertificate(models.Model):
@@ -291,19 +289,35 @@ class SSLCertificate(models.Model):
         """Manually refresh certificate information"""
         self.ensure_one()
         
-        # Trigger recomputation
-        self._compute_certificate_info()
-        
-        return {
-            'type': 'ir.actions.client',
-            'tag': 'display_notification',
-            'params': {
-                'title': _('Certificate Refreshed'),
-                'message': _('Certificate information for %s has been updated.') % self.domain,
-                'type': 'success',
-                'sticky': False,
+        try:
+            # Trigger recomputation
+            self._compute_certificate_info()
+            
+            # Force invalidate cache to ensure UI updates
+            self.invalidate_recordset()
+            
+            return {
+                'type': 'ir.actions.client',
+                'tag': 'display_notification',
+                'params': {
+                    'title': _('Certificate Refreshed'),
+                    'message': _('Certificate information for %s has been updated.') % self.domain,
+                    'type': 'success',
+                    'sticky': False,
+                }
             }
-        }
+        except Exception as e:
+            _logger.error(f"Error in action_refresh_certificate for {self.domain}: {e}")
+            return {
+                'type': 'ir.actions.client',
+                'tag': 'display_notification',
+                'params': {
+                    'title': _('Refresh Failed'),
+                    'message': _('Failed to refresh certificate for %s: %s') % (self.domain, str(e)),
+                    'type': 'danger',
+                    'sticky': False,
+                }
+            }
 
     def action_check_http_redirect(self):
         """Check if HTTP redirects to HTTPS"""

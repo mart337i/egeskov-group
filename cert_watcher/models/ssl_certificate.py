@@ -11,18 +11,6 @@ from odoo import models, fields, api, _
 from odoo.exceptions import UserError, ValidationError
 import logging
 
-try:
-    import dns.resolver
-    DNS_AVAILABLE = True
-except ImportError:
-    DNS_AVAILABLE = False
-
-try:
-    import whois
-    WHOIS_AVAILABLE = True
-except ImportError:
-    WHOIS_AVAILABLE = False
-
 _logger = logging.getLogger(__name__)
 
 class SSLCertificate(models.Model):
@@ -43,43 +31,7 @@ class SSLCertificate(models.Model):
         help='Port to check SSL certificate on'
     )
     
-    # Domain Management Information (Auto-detected)
-    dns_provider = fields.Selection([
-        ('cloudflare', 'Cloudflare'),
-        ('route53', 'Amazon Route 53'),
-        ('google_dns', 'Google Cloud DNS'),
-        ('azure_dns', 'Azure DNS'),
-        ('digitalocean', 'DigitalOcean DNS'),
-        ('namecheap', 'Namecheap DNS'),
-        ('godaddy', 'GoDaddy DNS'),
-        ('other', 'Other')
-    ], string='DNS Provider', compute='_compute_certificate_info', store=True,
-       help='Automatically detected DNS service provider managing this domain')
-    
-    dns_provider_other = fields.Char(
-        string='Other DNS Provider',
-        compute='_compute_certificate_info', store=True,
-        help='DNS provider name if not in the standard list'
-    )
-    
-    domain_registrar = fields.Selection([
-        ('godaddy', 'GoDaddy'),
-        ('namecheap', 'Namecheap'),
-        ('google_domains', 'Google Domains'),
-        ('cloudflare', 'Cloudflare Registrar'),
-        ('gandi', 'Gandi'),
-        ('hover', 'Hover'),
-        ('name_com', 'Name.com'),
-        ('porkbun', 'Porkbun'),
-        ('other', 'Other')
-    ], string='Domain Registrar', compute='_compute_certificate_info', store=True,
-       help='Automatically detected domain registrar where the domain was purchased')
-    
-    domain_registrar_other = fields.Char(
-        string='Other Registrar',
-        compute='_compute_certificate_info', store=True,
-        help='Registrar name if not in the standard list'
-    )
+
     
     # Certificate Status
     state = fields.Selection([
@@ -223,10 +175,6 @@ class SSLCertificate(models.Model):
 
     def _update_certificate_fields(self, cert_info):
         """Update certificate fields with fetched information"""
-        # Get DNS and registrar info
-        dns_info = self._detect_dns_provider()
-        registrar_info = self._detect_domain_registrar()
-        
         self.update({
             'issuer': cert_info.get('issuer'),
             'subject': cert_info.get('subject'),
@@ -241,10 +189,6 @@ class SSLCertificate(models.Model):
             'certificate_data': json.dumps(cert_info, indent=2, default=str),
             'error_message': cert_info.get('error_message'),
             'last_check': fields.Datetime.now(),
-            'dns_provider': dns_info.get('provider'),
-            'dns_provider_other': dns_info.get('provider_other'),
-            'domain_registrar': registrar_info.get('registrar'),
-            'domain_registrar_other': registrar_info.get('registrar_other'),
         })
 
     def _fetch_certificate_info(self):
@@ -345,19 +289,35 @@ class SSLCertificate(models.Model):
         """Manually refresh certificate information"""
         self.ensure_one()
         
-        # Trigger recomputation
-        self._compute_certificate_info()
-        
-        return {
-            'type': 'ir.actions.client',
-            'tag': 'display_notification',
-            'params': {
-                'title': _('Certificate Refreshed'),
-                'message': _('Certificate information for %s has been updated.') % self.domain,
-                'type': 'success',
-                'sticky': False,
+        try:
+            # Trigger recomputation
+            self._compute_certificate_info()
+            
+            # Force invalidate cache to ensure UI updates
+            self.invalidate_recordset()
+            
+            return {
+                'type': 'ir.actions.client',
+                'tag': 'display_notification',
+                'params': {
+                    'title': _('Certificate Refreshed'),
+                    'message': _('Certificate information for %s has been updated.') % self.domain,
+                    'type': 'success',
+                    'sticky': False,
+                }
             }
-        }
+        except Exception as e:
+            _logger.error(f"Error in action_refresh_certificate for {self.domain}: {e}")
+            return {
+                'type': 'ir.actions.client',
+                'tag': 'display_notification',
+                'params': {
+                    'title': _('Refresh Failed'),
+                    'message': _('Failed to refresh certificate for %s: %s') % (self.domain, str(e)),
+                    'type': 'danger',
+                    'sticky': False,
+                }
+            }
 
     def action_check_http_redirect(self):
         """Check if HTTP redirects to HTTPS"""
@@ -448,128 +408,4 @@ class SSLCertificate(models.Model):
             if record.port and (record.port < 1 or record.port > 65535):
                 raise ValidationError(_("Port must be between 1 and 65535"))
 
-    def _detect_dns_provider(self):
-        """Detect DNS provider by checking nameservers"""
-        if not DNS_AVAILABLE:
-            _logger.warning("DNS detection not available - dnspython not installed")
-            return {'provider': False, 'provider_other': False}
-            
-        try:
-            # Get nameservers for the domain
-            resolver = dns.resolver.Resolver()
-            ns_records = resolver.resolve(self.domain, 'NS')
-            nameservers = [str(ns).lower() for ns in ns_records]
-            
-            # Map nameserver patterns to providers
-            dns_providers = {
-                'cloudflare': ['cloudflare.com', 'ns.cloudflare.com'],
-                'route53': ['awsdns', 'amazonaws.com'],
-                'google_dns': ['googledomains.com', 'google.com', 'ns-cloud'],
-                'azure_dns': ['azure-dns.com', 'azure-dns.net', 'azure-dns.org', 'azure-dns.info'],
-                'digitalocean': ['digitalocean.com', 'ns1.digitalocean.com', 'ns2.digitalocean.com', 'ns3.digitalocean.com'],
-                'namecheap': ['namecheap.com', 'registrar-servers.com'],
-                'godaddy': ['domaincontrol.com', 'godaddy.com'],
-            }
-            
-            # Check which provider matches
-            for provider, patterns in dns_providers.items():
-                for ns in nameservers:
-                    for pattern in patterns:
-                        if pattern in ns:
-                            return {'provider': provider, 'provider_other': False}
-            
-            # If no match found, use the first nameserver as "other"
-            if nameservers:
-                first_ns = nameservers[0].split('.')[1:] if '.' in nameservers[0] else [nameservers[0]]
-                provider_name = '.'.join(first_ns) if first_ns else nameservers[0]
-                return {'provider': 'other', 'provider_other': provider_name}
-            
-            return {'provider': False, 'provider_other': False}
-            
-        except Exception as e:
-            _logger.warning(f"Could not detect DNS provider for {self.domain}: {e}")
-            return {'provider': False, 'provider_other': False}
 
-    def _detect_domain_registrar(self):
-        """Detect domain registrar using WHOIS lookup"""
-        # Try python-whois library first
-        if WHOIS_AVAILABLE:
-            try:
-                domain_info = whois.whois(self.domain)
-                
-                if domain_info and hasattr(domain_info, 'registrar') and domain_info.registrar:
-                    registrar_name = ''
-                    if isinstance(domain_info.registrar, list):
-                        registrar_name = domain_info.registrar[0].lower()
-                    else:
-                        registrar_name = str(domain_info.registrar).lower()
-                    
-                    return self._map_registrar_name(registrar_name)
-                    
-            except Exception as e:
-                _logger.warning(f"python-whois failed for {self.domain}: {e}")
-        
-        # Fallback to system whois command
-        try:
-            result = subprocess.run(['whois', self.domain], 
-                                  capture_output=True, text=True, timeout=10)
-            
-            if result.returncode == 0:
-                whois_text = result.stdout.lower()
-                
-                # Look for registrar information in various formats
-                registrar_patterns = [
-                    r'registrar:\s*(.+)',
-                    r'registrar name:\s*(.+)',
-                    r'sponsoring registrar:\s*(.+)',
-                    r'registrar organization:\s*(.+)',
-                ]
-                
-                for pattern in registrar_patterns:
-                    match = re.search(pattern, whois_text)
-                    if match:
-                        registrar_name = match.group(1).strip()
-                        return self._map_registrar_name(registrar_name)
-                        
-        except Exception as e:
-            _logger.warning(f"System whois failed for {self.domain}: {e}")
-        
-        # Fallback to HTTP WHOIS service
-        try:
-            response = requests.get(f'https://www.whois.com/whois/{self.domain}', timeout=10)
-            if response.status_code == 200:
-                # This is a basic fallback - would need more sophisticated parsing
-                # for a production system
-                pass
-        except Exception as e:
-            _logger.warning(f"HTTP WHOIS failed for {self.domain}: {e}")
-            
-        return {'registrar': False, 'registrar_other': False}
-
-    def _map_registrar_name(self, registrar_name):
-        """Map detected registrar name to our selection options"""
-        if not registrar_name:
-            return {'registrar': False, 'registrar_other': False}
-            
-        registrar_name = registrar_name.lower()
-        
-        # Map registrar names to our selection options
-        registrar_mapping = {
-            'godaddy': ['godaddy', 'go daddy', 'godaddy.com'],
-            'namecheap': ['namecheap', 'namecheap.com'],
-            'google_domains': ['google', 'google domains', 'google inc', 'google llc'],
-            'cloudflare': ['cloudflare', 'cloudflare inc'],
-            'gandi': ['gandi', 'gandi sas'],
-            'hover': ['hover', 'tucows'],
-            'name_com': ['name.com', 'namecom'],
-            'porkbun': ['porkbun', 'porkbun llc'],
-        }
-        
-        # Check which registrar matches
-        for registrar, patterns in registrar_mapping.items():
-            for pattern in patterns:
-                if pattern in registrar_name:
-                    return {'registrar': registrar, 'registrar_other': False}
-        
-        # If no match found, use the detected registrar name as "other"
-        return {'registrar': 'other', 'registrar_other': registrar_name.title()}
